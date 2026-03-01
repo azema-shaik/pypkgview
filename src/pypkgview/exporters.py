@@ -6,6 +6,19 @@ from .datastructures import Discover as EngineProtocol
 
 logger = logging.getLogger(__name__)
 
+class StreamExporter:
+    
+    def  export(self, discover: EngineProtocol): 
+        import pprint
+        print(f"\Package: 033[1;38;5;9m{discover.package}\033[0m")
+        for dct in discover:
+            module_name = list(dct)[0]
+            print(f"\Module: 033[1;38;5;10m{discover.package}\033[0m")
+            pprint.pprint(dct)
+
+
+
+
 class YamlExporter:
     def  export(self, discover: EngineProtocol): 
         try:
