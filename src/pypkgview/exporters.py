@@ -181,10 +181,7 @@ class SqliteExporter:
                 for x in dct[module_name]["imports"]["direct"]
             ])
 
-            cursor.executemany(import_stmt,[
-                {"module_id": idx, "source": None, "name": x, "type": "direct"}
-                for x in dct[module_name]["imports"]["direct"]
-            ])
+            
             cursor.executemany(import_stmt,[
                 {"module_id": idx, "source": src, "name": name, "type": "external"}
                 for src, names in dct[module_name]["imports"]["external_imports"].items()

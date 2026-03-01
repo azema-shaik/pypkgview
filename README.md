@@ -104,13 +104,6 @@ imports    (id, module_id, source, name, type)
 
 **Version diffing** — run against two versions of the same package and diff the databases to generate a structural changelog.
 
-## Example findings
-
-Running pypkgview against real packages reveals things that docs won't tell you:
-
-- **FastAPI** — the entire OpenAPI schema lives in one module (`fastapi.openapi.models`, 42 classes). Zero async module-level functions — all async logic lives inside class methods.
-- **Pydantic v2** — ships a full copy of v1 internally (`pydantic.v1.*`). The two codebases are nearly identical in size. The real engine lives in `pydantic._internal` — 28 modules, 190 functions, mostly invisible to users.
-
 ## Architecture
 
 ```

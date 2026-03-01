@@ -1,0 +1,24 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pypkgview"
+version = "0.1.4"
+description = "Python package introspection and analysis tool"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+yaml = ["pyyaml"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pypkgview"]
+
+[project.scripts]
+pypkgview = "pypkgview.__main__:main"
+
+[project.urls]
+Homepage = "https://github.com/azema-shaik/pypkgview"
+Repository = "https://github.com/azema-shaik/pypkgview"
