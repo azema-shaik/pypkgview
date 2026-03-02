@@ -76,6 +76,9 @@ class SqliteExporter:
             is_descriptor INTEGER,
             descriptor_type TEXT, -- non_data, data
             is_nested INTEGER,
+            is_contextmanager INTEGER,
+            is_iterable INTEGER,
+            is_iterator INTEGER,
             parent_class TEXT,
             has_metaclass INTEGER,
             metaclass TEXT);
@@ -127,11 +130,13 @@ class SqliteExporter:
             print(f'Parsing: \033[1;38;5;10m{module_name!r}\033[0m')
             cursor.execute("INSERT INTO modules VALUES(?,?)", (idx,module_name))
             class_insert_stmt = """INSERT INTO classes (id, module_id, name, is_descriptor, 
-                               descriptor_type, is_nested, metaclass, parent_class, has_metaclass)
+                               descriptor_type, is_nested, metaclass, parent_class, has_metaclass,
+                               is_contextmanager,is_iterable,is_iterator)
                                VALUES 
                                (:id, :module_id, :name, :is_descriptor, :descriptor_type,
                                :is_nested, :metaclass,
-                               :parent_class, :has_metaclass)"""
+                               :parent_class, :has_metaclass,:is_contextmanager,
+                               :is_iterable, :is_iterator)"""
             bases_stmt = """INSERT INTO bases(class_id, name) VALUES (:class_id, :name)"""
             decorator_stmt = """INSERT INTO decorators(class_id, function_id, name) VALUES 
                             (:class_id, :function_id, :name)"""
@@ -148,6 +153,9 @@ class SqliteExporter:
                     "is_nested": int(cls["is_nested"]), 
                     "parent_class": cls["parent_class"],
                     "has_metaclass": int(cls["metadata"]["has_metaclass"]),
+                    "is_contextmanager": int(cls["is_contextmanager"]),
+                    "is_iterable": int(cls["is_iterable"]),
+                    "is_iterator": int(cls["is_iterator"]),
                     "metaclass": cls["metadata"]["attrs"].get("metaclass")})
                 cursor.executemany(bases_stmt,[
                                {"class_id": class_id, "name": base}

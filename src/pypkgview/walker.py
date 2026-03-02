@@ -68,12 +68,25 @@ class BaseModuleWalker(ABC):
                 bases += [b]
             clss_dct[cls.name] = {"bases": bases, 
                                   "decorators": self._handle_decorator(cls, memory), 
+                                  'is_contextmanager': self._parse_context_manager(cls.method),
                                   'is_nested': cls.is_nested_class, 'parent_class': cls.parent_class,
                                   "is_descriptor":cls.is_descriptor,
+                                  "is_iterator": self._parse_iterator(cls.method),
+                                  'is_iterable': self._parse_iterable(cls.method),
                                   "metadata": self._parse_keywords(cls, memory)} | ({"descriptor_type": cls.descriptor_type} if cls.is_descriptor else {})
         return dict(clss_dct)
     
-
+    def _parse_context_manager(self, nodes: list[ast.FunctionDef | ast.AsyncFunctionDef]):
+        return any((x.name == '__enter__') for x in nodes) and \
+                any((x.name == '__exit__') for x in nodes)
+    
+    def _parse_iterator(self, nodes: list[ast.FunctionDef | ast.AsyncFunctionDef]):
+        return any((x.name == '__iter__') for x in nodes) and \
+                any((x.name == '__next__') for x in nodes)
+    
+    def _parse_iterable(self, nodes: list[ast.FunctionDef | ast.AsyncFunctionDef]):
+        return any((x.name == '__iter__') for x in nodes)
+    
     def _parse_generator(self, node: ast.FunctionDef|ast.AsyncFunctionDef) -> dict[str, bool]:
         d = list(filter(lambda x: isinstance(x,(ast.Yield,ast.YieldFrom))
         ,ast.walk(node) ))

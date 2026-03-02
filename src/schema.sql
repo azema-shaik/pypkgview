@@ -4,16 +4,18 @@ CREATE TABLE modules (
 )
 
 CREATE TABLE classes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    module_id INTEGER REFERENCES modules(id),
-    name TEXT,
-    is_descriptor INTEGER,
-    descriptor_type TEXT, -- non_data, data
-    is_nested INTEGER,
-    parent_class TEXT,
-    has_metaclass INTEGER,
-    metaclass_name TEXT,
-)
+            id INTEGER PRIMARY KEY,
+            module_id INTEGER REFERENCES modules(id),
+            name TEXT,
+            is_descriptor INTEGER,
+            descriptor_type TEXT, -- non_data, data
+            is_nested INTEGER,
+            is_contextmanager INTEGER,
+            is_iterable INTEGER,
+            is_iterator INTEGER,
+            parent_class TEXT,
+            has_metaclass INTEGER,
+            metaclass TEXT);
 
 CREATE TABLE bases (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
