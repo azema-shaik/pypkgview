@@ -49,5 +49,6 @@ CREATE TABLE imports (
     module_id INTEGER REFERENCES modules(id),
     source TEXT,   -- null for direct imports
     name TEXT,
-    type  TEXT-- 'direct' | 'external' | 'internal_absolute' | 'internal_relative'
+    type  TEXT,-- 'direct' | 'external' | 'internal_absolute' | 'internal_relative'
+    alias TEXT
 )

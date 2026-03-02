@@ -17,7 +17,7 @@ class DiscoverEngine:
     def package(self):
         return self._package
 
-    def __iter__(self) -> Generator[dict[str,str]]:
+    def __iter__(self):
         for dirpath, folders, files in os.walk(self.file_path):
             if dirpath.endswith("__pycache__"):
                 continue 

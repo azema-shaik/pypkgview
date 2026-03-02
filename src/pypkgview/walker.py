@@ -1,6 +1,7 @@
 import os 
 import ast 
 import pathlib 
+import builtins
 from collections import defaultdict 
 from abc import ABC, abstractmethod
 
@@ -63,13 +64,7 @@ class BaseModuleWalker(ABC):
                 if isinstance(base, ast.Subscript):
                     base = base.value
                 b = ast.unparse(base)
-                try: 
-                    b = memory[b]
-                except KeyError: 
-                    b = f'{self.module_name}.{b}'
-
-                
-                
+                b = self._handle_name_resolution(b, memory)
                 bases += [b]
             clss_dct[cls.name] = {"bases": bases, 
                                   "decorators": self._handle_decorator(cls, memory), 
@@ -86,16 +81,25 @@ class BaseModuleWalker(ABC):
                 "has_generator_delegation": any(isinstance(x, ast.YieldFrom) for x in d)
         }
     
+    def _handle_name_resolution(self,name: str, memory):
+        try:
+            name = memory[name.split('.')[0]]
+        except KeyError as e: 
+            if hasattr(builtins,name):
+                name = f'builtins.{name}'
+            else:
+                name = f'{self.module_name}.{name}'
+        
+        return name
+
+    
     def _handle_decorator(self, func: ast.FunctionDef|Class, memory: dict[str,str]) -> list[str]:
         decs = []
         for dec in func.decorator_list:
             if isinstance(dec, ast.Call):
                 dec = dec.func
             name = ast.unparse(dec)
-            try:
-                name = memory[name.split('.')[0]]
-            except KeyError as e: 
-                name = f'{self.module_name}.{name}'
+            name = self._handle_name_resolution(name, memory)
             decs.append(name)
         return decs
     

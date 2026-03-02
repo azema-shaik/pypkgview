@@ -31,6 +31,8 @@ class YamlExporter:
         cwd = os.getcwd()
         with open(os.path.join(cwd, f'{discover.package}.yaml'), 'w', encoding = 'utf-8') as file:
             for dct in discover:
+                module_name = list(dct)[0]
+                print(f'Parsing: \033[1;38;5;10m{module_name!r}\033[0m')
                 yaml.safe_dump(dct, file)
         
     
@@ -44,6 +46,7 @@ class JSONExporter:
         os.makedirs(dirpath, exist_ok = True)
         for dct in discover:
             module_name, *_ = dct
+            print(f'Parsing: \033[1;38;5;10m{module_name!r}\033[0m')
             fdr = ".".join(module_name.split(".")[:2])
             os.makedirs(os.path.join(dirpath, fdr), exist_ok=True)
             with open(os.path.join(dirpath, fdr, f'{module_name}.json'), 'w', encoding = 'utf-8') as f:
@@ -56,7 +59,7 @@ class SqliteExporter:
 
         logger.debug("creating table")
         cwd = os.getcwd()
-        conn = sqlite3.connect(os.path.join(cwd, f'{discover.package}.db'))
+        conn = sqlite3.connect(os.path.join(cwd, f'{discover.package}.sqlite'))
         cursor = conn.cursor()
 
         cursor.executescript("""
@@ -113,6 +116,7 @@ class SqliteExporter:
             module_id INTEGER REFERENCES modules(id),
             source TEXT,   -- null for direct imports
             name TEXT,
+            alias TEXT,
             type  TEXT-- 'direct' | 'external' | 'internal_absolute' | 'internal_relative'
         );
         """)
@@ -173,22 +177,22 @@ class SqliteExporter:
                                    for cnst in consts
                                ])
             
-            import_stmt = """INSERT INTO imports(module_id, source, name, type)
-            VALUES(:module_id, :source, :name, :type)"""
+            import_stmt = """INSERT INTO imports(module_id, source, name, alias,type)
+            VALUES(:module_id, :source, :name, :alias,:type)"""
+            
             
             cursor.executemany(import_stmt,[
-                {"module_id": idx, "source": None, "name": x, "type": "direct"}
+                {"module_id": idx, "source": None, 
+                "name": (m_name := x.split(" as "))[0].strip(), 
+                "alias": m_name[-1].strip() if len(m_name) > 1  else None,
+                "type": "direct"}
                 for x in dct[module_name]["imports"]["direct"]
             ])
 
-            
             cursor.executemany(import_stmt,[
-                {"module_id": idx, "source": src, "name": name, "type": "external"}
-                for src, names in dct[module_name]["imports"]["external_imports"].items()
-                for name in names
-            ])
-            cursor.executemany(import_stmt,[
-                {"module_id": idx, "source": src, "name": name, 
+                {"module_id": idx, "source": src, 
+                 "name": (m_name := name.split(" as "))[0].strip(), 
+                "alias": m_name[-1].strip() if len(m_name) > 1  else None, 
                  "type": {"absolute_imports": "internal_absolute",
                           "relative_imports": "internal_relative"}[type]
                 }
