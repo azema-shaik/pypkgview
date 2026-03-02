@@ -5,6 +5,8 @@ __pycache__/
 .vscode
 *.db 
 _types.py
+*.sqlite*
+*.yaml
 # C extensions
 *.so
 
