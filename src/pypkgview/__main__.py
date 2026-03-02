@@ -6,7 +6,7 @@ from . import (ModuleWalker,
 from .datastructures import Exporter
 
 args = argparse.ArgumentParser("pypkgview")
-args.add_argument('--module-path','-m')
+args.add_argument('--module-path','-m', required = True)
 args.add_argument('--output','-o',choices = ["json","yaml","sqlite"])
 parser = args.parse_args()
 
