@@ -6,6 +6,9 @@ build-backend = "hatchling.build"
 name = "pypkgview"
 version = "0.1.10"
 description = "Python package introspection and analysis tool"
+authors = [
+    { name = "Azema Shaik"}
+]
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = []
