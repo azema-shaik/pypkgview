@@ -201,6 +201,16 @@ class SqliteExporter:
                 {"module_id": idx, "source": src, 
                  "name": (m_name := name.split(" as "))[0].strip(), 
                 "alias": m_name[-1].strip() if len(m_name) > 1  else None, 
+                 "type": "internal_absolute" if src == discover.package else "external"
+                }
+                for src, names in dct[module_name]["imports"]["external_imports"].items()
+                for name in names
+            ])
+
+            cursor.executemany(import_stmt,[
+                {"module_id": idx, "source": src, 
+                 "name": (m_name := name.split(" as "))[0].strip(), 
+                "alias": m_name[-1].strip() if len(m_name) > 1  else None, 
                  "type": {"absolute_imports": "internal_absolute",
                           "relative_imports": "internal_relative"}[type]
                 }

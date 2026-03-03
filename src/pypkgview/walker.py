@@ -27,7 +27,7 @@ class BaseModuleWalker(ABC):
         memory = {}
         for imp in imports:
             
-            imported_from = imp.module if imp.level == 0 else ((".".join(mod for mod in self._modules[:-imp.level]))+("."+imp.module if imp.module is not None else ""))
+            imported_from = imp.module if imp.level == 0 else (self._modules[0] if len(self._modules) == 1 else (".".join(mod for mod in self._modules[:-imp.level]))+("."+imp.module if imp.module is not None else ""))
             imports = [(name.name if name.asname is None else f"{name.name} as {name.asname}") for name in imp.names] 
             memory |= {(name.asname or name.name): f'{imported_from}.{name.name}' for name in imp.names}
             
