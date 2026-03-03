@@ -40,9 +40,14 @@ class BaseModuleWalker(ABC):
         
         return {self.package: current_package, "external_imports": dict(other_imports)}, memory
     
-    def _parse_imports(self, imports: list[ast.Import]) -> list[str]:
-        return [(name.name if name.asname is None else f"{name.name} as {name.asname}")
-                for imp in imports for name in imp.names]
+    def _parse_imports(self, imports: list[ast.Import], memory) -> list[str]:
+        results = []
+        for imp in imports:
+            for name in imp.names:
+                results += [(name.name if name.asname is None else f"{name.name} as {name.asname}")]
+                memory[name.asname or name.name] = 'DIRECT' if name.asname is None else f'ALIAS = {name.name}'
+                
+        return results
     
     def _parse_keywords(self, cls: Class, memory) -> dict[str, bool | str]:
         attrs = {k.arg : ast.unparse(k.value)
@@ -96,7 +101,8 @@ class BaseModuleWalker(ABC):
     
     def _handle_name_resolution(self,name: str, memory):
         try:
-            name = memory[name.split('.')[0]]
+            mem_value: str = memory[name.split('.')[0]]
+            name = (mem_value if mem_value != 'DIRECT' else name) if not mem_value.startswith('ALIAS') else f'{mem_value.split("=")[-1].strip()}.{name.split('.',maxsplit=1)[-1]}'
         except KeyError as e: 
             if hasattr(builtins,name):
                 name = f'builtins.{name}'
@@ -159,7 +165,7 @@ class ModuleWalker(BaseModuleWalker):
         v: NodeVisitor = self.parser()
         main_dct = {}
         relative_imports, memory = self._parse_import_from(v.import_froms)
-        main_dct["imports"] = {"direct": self._parse_imports(v.imports)}|relative_imports
+        main_dct["imports"] = {"direct": self._parse_imports(v.imports,memory)}|relative_imports
         main_dct["classes"] = self._parse_class(v.classes, memory)
         main_dct["functions"] = self._parse_function(v.functions,memory)
         main_dct["constants"] = self._parse_constants(v.variables)
