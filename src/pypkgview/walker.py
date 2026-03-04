@@ -2,11 +2,15 @@ import os
 import ast 
 import pathlib 
 import builtins
+import logging
 from collections import defaultdict 
 from abc import ABC, abstractmethod
 
 from .datastructures import Class 
 from .parser import NodeVisitor 
+
+
+logger = logging.getLogger(__name__)
 
 class BaseModuleWalker(ABC):
     def __init__(self, *, module_name: str, module_path: str):
@@ -22,22 +26,31 @@ class BaseModuleWalker(ABC):
         
 
     def _parse_import_from(self, imports: list[ast.ImportFrom]) -> dict[str, str | dict[str, str | list[str]]]:
+        logger.debug('_parse_import_from running')
+
         other_imports = defaultdict(list)
         current_package = {"relative_imports": {}, "absolute_imports": {}}
         memory = {}
-        for imp in imports:
+        logger.debug('memory dict initialized')
+        for idx,imp in enumerate(imports,start = 1):
+            logger.debug(f'memory dict at the beginning of iteration({idx}) {memory = }')
+            logger.debug(f'{imp.__dict__}')    
             
             imported_from = imp.module if imp.level == 0 else (self._modules[0] if len(self._modules) == 1 else (".".join(mod for mod in self._modules[:-imp.level]))+("."+imp.module if imp.module is not None else ""))
-            imports = [(name.name if name.asname is None else f"{name.name} as {name.asname}") for name in imp.names] 
-            memory |= {(name.asname or name.name): f'{imported_from}.{name.name}' for name in imp.names}
+            logger.debug(f'{imported_from = !r}')
             
+            imports = [(name.name if name.asname is None else f"{name.name} as {name.asname}") for name in imp.names] 
+            logger.debug(f'{imports = !r}')
+            
+            memory |= {(name.asname or name.name): f'{imported_from}.{name.name}' for name in imp.names}
+            logger.debug(f'memory dict at the end of iteration({idx}) {memory = }')
             
             if imp.level > 0 or imp.module == self.package or imported_from.split('.')[0] == self.package:
                 current_package[("relative_imports" if imp.level > 0 else "absolute_imports")][imported_from] = imports
             else:
                 other_imports[imported_from] = imports 
         
-        
+        logger.debug(f'"from import" processing complete. Memory {memory}')
         return {self.package: current_package, "external_imports": dict(other_imports)}, memory
     
     def _parse_imports(self, imports: list[ast.Import], memory) -> list[str]:
@@ -100,26 +113,39 @@ class BaseModuleWalker(ABC):
         }
     
     def _handle_name_resolution(self,name: str, memory):
+        logger.debug(f'naming resolution bases or decorators. Resolving {name = !r}')
+        
         try:
             mem_value: str = memory[name.split('.')[0]]
+            logger.debug(f'{mem_value} extracted from memory')
+            
             name = (mem_value if mem_value != 'DIRECT' else name) if not mem_value.startswith('ALIAS') else f'{mem_value.split("=")[-1].strip()}.{name.split('.',maxsplit=1)[-1]}'
+            logger.debug(f'Resolved name: {name}')
         except KeyError as e: 
             if hasattr(builtins,name):
+                logger.debug(f'{name!r} is a builtins')
                 name = f'builtins.{name}'
             else:
+                logger.debug(f'{name!r} neither in imports dict nor a builtin. Meaning {name!r} defined in current module.')
                 name = f'{self.module_name}.{name}'
         
+        logger.info(f'Final Resolved name: {name!r}')
         return name
 
     
     def _handle_decorator(self, func: ast.FunctionDef|Class, memory: dict[str,str]) -> list[str]:
+        logger.debug(f'Handling decorators')
+
         decs = []
         for dec in func.decorator_list:
             if isinstance(dec, ast.Call):
                 dec = dec.func
             name = ast.unparse(dec)
+            
+            logger.debug(f'Extracted decorator name: {name!r}')
             name = self._handle_name_resolution(name, memory)
             decs.append(name)
+        logger.debug(f'{decs = }')
         return decs
     
     def  _parse_function(self,functions: list[ast.FunctionDef], memory: dict[str,str]) -> dict[str, dict[str,str|bool] | list[str] | bool]:
@@ -153,17 +179,25 @@ class BaseModuleWalker(ABC):
 class ModuleWalker(BaseModuleWalker):
 
     def parser(self):
+        logger.info(f'Parsing module. Module {self.module_name}')
+
         try:
             code = ast.parse(self.module_path.read_text(encoding = "utf-8") )
         except SyntaxError as e:
             raise SyntaxError(f'error when trying to parse {self.module_path!r}')
+        
+        logger.debug(f'NodeVisitor will be initialized.')
+
         v = NodeVisitor()
+
+        logger.debug(f'node will be visited.')
         v.visit(code)
         return v         
     
     def __call__(self):
         v: NodeVisitor = self.parser()
         main_dct = {}
+        logger.debug("Parsing starts.")
         relative_imports, memory = self._parse_import_from(v.import_froms)
         main_dct["imports"] = {"direct": self._parse_imports(v.imports,memory)}|relative_imports
         main_dct["classes"] = self._parse_class(v.classes, memory)

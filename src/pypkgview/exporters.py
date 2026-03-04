@@ -9,11 +9,13 @@ logger = logging.getLogger(__name__)
 class StreamExporter:
     
     def  export(self, discover: EngineProtocol): 
+        logger.info(f'StreamExporter chosen.')
+
         import pprint
-        print(f"\Package: 033[1;38;5;9m{discover.package}\033[0m")
+        print(f"Package: 033[1;38;5;9m{discover.package}\033[0m")
         for dct in discover:
             module_name = list(dct)[0]
-            print(f"\Module: 033[1;38;5;10m{discover.package}\033[0m")
+            print(f"Module: 033[1;38;5;10m{discover.package}\033[0m")
             pprint.pprint(dct)
 
 
@@ -21,6 +23,7 @@ class StreamExporter:
 
 class YamlExporter:
     def  export(self, discover: EngineProtocol): 
+        logger.info(f'YamlExporter chosen.')
         try:
             import yaml
         except ModuleNotFoundError:
@@ -39,6 +42,7 @@ class YamlExporter:
 
 class JSONExporter:
     def  export(self, discover: EngineProtocol): 
+        logger.info(f'JSONExporter chosen.')
         import json
         
         
@@ -55,6 +59,7 @@ class JSONExporter:
          
 class SqliteExporter:
     def export(self, discover: EngineProtocol):
+        logger.info(f'Sqlitexporter chosen.')
         import sqlite3 
 
         logger.debug("creating table")
@@ -94,6 +99,7 @@ class SqliteExporter:
             id INTEGER PRIMARY KEY ,
             module_id INTEGER REFERENCES modules(id),
             name TEXT,
+            is_decorated INTEGER,
             is_async INTEGER,
             is_generator INTEGER,
             has_generator_delegation INTEGER);
@@ -122,7 +128,13 @@ class SqliteExporter:
             alias TEXT,
             type  TEXT-- 'direct' | 'external' | 'internal_absolute' | 'internal_relative'
         );
+        CREATE INDEX idx_imports_name ON imports(name);
+        CREATE INDEX idx_functions_name ON functions(name);
+        CREATE INDEX idx_classes_name ON classes(name);
+        CREATE INDEX idx_functions_module ON functions(module_id);
+        CREATE INDEX idx_classes_module ON classes(module_id);
         """)
+        logger.debug('Finished creating table')
         class_id = 0 
         func_id = 0
         for idx, dct in enumerate(discover, start = 1):
@@ -141,8 +153,8 @@ class SqliteExporter:
             decorator_stmt = """INSERT INTO decorators(class_id, function_id, name) VALUES 
                             (:class_id, :function_id, :name)"""
             functions_stmt = """INSERT INTO functions 
-                (id, module_id, name, is_async, is_generator, has_generator_delegation) VALUES
-                (:id, :module_id, :name, :is_async, :is_generator, :has_generator_delegation)"""
+                (id, module_id, name, is_async, is_generator, has_generator_delegation, is_decorated) VALUES
+                (:id, :module_id, :name, :is_async, :is_generator, :has_generator_delegation, :is_decorated)"""
             
             for class_name, cls in dct[module_name]["classes"].items():
                 class_id += 1
@@ -171,6 +183,7 @@ class SqliteExporter:
                     {"id": func_id, "module_id": idx, "name": func_name, 
                      "is_async": int(func["is_async"]),
                      "is_generator": int(func["is_generator"]), 
+                     'is_decorated': int(func['is_decorated']),
                      "has_generator_delegation": int(func["has_generator_delegation"])})
                 
                 cursor.executemany(decorator_stmt, 

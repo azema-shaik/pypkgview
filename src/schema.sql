@@ -27,6 +27,7 @@ CREATE TABLE functions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     module_id INTEGER REFERENCES modules(id),
     name TEXT,
+    is_decorated INTEGER,
     is_async INTEGER,
     is_generator INTEGER,
     has_generator_delegation INTEGER
