@@ -3,14 +3,23 @@ import ast
 import pathlib 
 import builtins
 import logging
-from collections import defaultdict 
+from typing import Literal 
+from collections import defaultdict
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 
 from .datastructures import Class 
 from .parser import NodeVisitor 
 
 
 logger = logging.getLogger(__name__)
+
+@dataclass(frozen = True)
+class _Name:
+    name: str 
+    imp_type: Literal["direct","import_from"]
+    alias: str | None = None 
+
 
 class BaseModuleWalker(ABC):
     def __init__(self, *, module_name: str, module_path: str):
@@ -42,7 +51,8 @@ class BaseModuleWalker(ABC):
             imports = [(name.name if name.asname is None else f"{name.name} as {name.asname}") for name in imp.names] 
             logger.debug(f'{imports = !r}')
             
-            memory |= {(name.asname or name.name): f'{imported_from}.{name.name}' for name in imp.names}
+            memory |= {(name.asname or name.name): _Name(name = f'{imported_from}.{name.name}', alias = name.asname,imp_type = 'import_from') 
+                                                         for name in imp.names}
             logger.debug(f'memory dict at the end of iteration({idx}) {memory = }')
             
             if imp.level > 0 or imp.module == self.package or imported_from.split('.')[0] == self.package:
@@ -54,21 +64,22 @@ class BaseModuleWalker(ABC):
         return {self.package: current_package, "external_imports": dict(other_imports)}, memory
     
     def _parse_imports(self, imports: list[ast.Import], memory) -> list[str]:
+        logger.debug('_parse_imports')
         results = []
         for imp in imports:
             for name in imp.names:
                 results += [(name.name if name.asname is None else f"{name.name} as {name.asname}")]
-                memory[name.asname or name.name] = 'DIRECT' if name.asname is None else f'ALIAS = {name.name}'
-                
+                memory[name.asname or name.name] = _Name(name = name.name, alias = name.asname, imp_type = 'direct')
+        
+        logger.debug(f'Memory: {memory}')        
         return results
     
     def _parse_keywords(self, cls: Class, memory) -> dict[str, bool | str]:
         attrs = {k.arg : ast.unparse(k.value)
             for k in cls.keywords}
         if "metaclass" in attrs:
-            try:
-                attrs["metaclass"] = memory[attrs["metaclass"].split(".")[0]]
-            except KeyError: ... 
+            attrs["metaclass"] = self._handle_name_resolution(attrs["metaclass"],memory)
+            
 
         return {"has_metaclass": ("metaclass" in attrs), "attrs": attrs}
 
@@ -114,12 +125,14 @@ class BaseModuleWalker(ABC):
     
     def _handle_name_resolution(self,name: str, memory):
         logger.debug(f'naming resolution bases or decorators. Resolving {name = !r}')
-        
         try:
-            mem_value: str = memory[name.split('.')[0]]
-            logger.debug(f'{mem_value} extracted from memory')
+            logger.debug(f"memory for resolving name: {memory=}")
+            key = name.split('.',maxsplit = 1)
+            mem_value: _Name = memory[key[0]]
             
-            name = (mem_value if mem_value != 'DIRECT' else name) if not mem_value.startswith('ALIAS') else f'{mem_value.split("=")[-1].strip()}.{name.split('.',maxsplit=1)[-1]}'
+            logger.debug(f'{mem_value!r} extracted from memory')       
+            attr = name.split('.',maxsplit=1)[-1]
+            name = (f'{mem_value.name}')+(f'.{attr}' if len(key) == 2 else '')
             logger.debug(f'Resolved name: {name}')
         except KeyError as e: 
             if hasattr(builtins,name):
@@ -184,7 +197,7 @@ class ModuleWalker(BaseModuleWalker):
         try:
             code = ast.parse(self.module_path.read_text(encoding = "utf-8") )
         except SyntaxError as e:
-            raise SyntaxError(f'error when trying to parse {self.module_path!r}')
+            raise SyntaxError(f'error when trying to parse {self.module_path!r}.{e.args[0]}')
         
         logger.debug(f'NodeVisitor will be initialized.')
 
