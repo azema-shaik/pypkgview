@@ -3,6 +3,7 @@ import ast
 import pathlib 
 import builtins
 import logging
+import tokenize
 from typing import Literal 
 from collections import defaultdict
 from abc import ABC, abstractmethod
@@ -193,9 +194,11 @@ class ModuleWalker(BaseModuleWalker):
 
     def parser(self):
         logger.info(f'Parsing module. Module {self.module_name}')
+        encoding, _ = tokenize.detect_encoding(open(self.module_path, mode = 'rb').readline)
+        logger.debug(f'Detected encoding: {encoding}')
 
         try:
-            code = ast.parse(self.module_path.read_text(encoding = "utf-8") )
+            code = ast.parse(self.module_path.read_text(encoding = encoding) )
         except SyntaxError as e:
             raise SyntaxError(f'error when trying to parse {self.module_path!r}.{e.args[0]}')
         
