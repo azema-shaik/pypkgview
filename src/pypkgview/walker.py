@@ -74,8 +74,7 @@ class BaseModuleWalker(ABC):
                 other_imports[imported_from].extend(imports) 
         
         logger.debug(f'"from import" processing complete. Memory {memory}')
-        return {self.package: {"relative_imports": list(current_package["relative_imports"]),
-                                "absolute_imports": list(current_package["absolute_imports"])}, 
+        return {self.package: current_package, 
                 "external_imports": dict(other_imports)}, memory
     
     def _parse_imports(self, imports: list[ast.Import], memory) -> list[str]:

@@ -23,14 +23,16 @@ class StreamExporter:
 
 class YamlExporter:
     def  export(self, discover: EngineProtocol): 
+        
         logger.info(f'YamlExporter chosen.')
         try:
+            from collections import defaultdict
             import yaml
         except ModuleNotFoundError:
             logger.exception("error when trying to load module yaml")
             raise 
                 
-        
+        yaml.SafeDumper.add_representer(defaultdict,yaml.representer.Representer.represent_dict)
         cwd = os.getcwd()
         with open(os.path.join(cwd, f'{discover.package}.yaml'), 'w', encoding = 'utf-8') as file:
             for dct in discover:
@@ -219,7 +221,7 @@ class SqliteExporter:
                 for src, names in dct[module_name]["imports"]["external_imports"].items()
                 for name in names
             ])
-
+            print(dct[module_name]["imports"][discover.package])
             cursor.executemany(import_stmt,[
                 {"module_id": idx, "source": src, 
                  "name": (m_name := name.split(" as "))[0].strip(), 
