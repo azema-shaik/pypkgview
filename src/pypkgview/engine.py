@@ -38,7 +38,7 @@ class DiscoverEngine:
 
                 module_name = os.path.splitext(full_path)[0]\
                                 .replace(self.file_path,self.package)\
-                                .replace(os.sep,".").replace("__init__","").strip(" .")
+                                .replace(os.sep,".").strip(" .")
                 logger.info(F'Module Path: {module_name}')
                 logger.debug('Initializing debug.')
 
@@ -52,5 +52,6 @@ class DiscoverEngine:
                         raise e
                     logger.exception(f'Error when trying to parse module')
                     dct = {}
-
+                
+                module_name = module_name.replace("__init__","").strip(' .')
                 yield {module_name:dct}

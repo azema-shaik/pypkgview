@@ -33,36 +33,50 @@ class BaseModuleWalker(ABC):
         self._modules = self.module_name.split(".")
         self.package = self._modules[0]
         self.module_path = pathlib.Path(module_path)
+
+    def _handle_import_name_resolution(self, imp: ast.ImportFrom):
+        
+        if imp.level == 0:
+            return imp.module
+        p = '.'.join(mod for mod in self._modules[:-imp.level]) + ("."+imp.module if imp.module is not None else "")
+        logger.debug(f'imported name: {p}')
+        return p
+
         
 
     def _parse_import_from(self, imports: list[ast.ImportFrom]) -> dict[str, str | dict[str, str | list[str]]]:
         logger.debug('_parse_import_from running')
 
         other_imports = defaultdict(list)
-        current_package = {"relative_imports": {}, "absolute_imports": {}}
+        current_package = {"relative_imports": defaultdict(list), "absolute_imports": defaultdict(list)}
         memory = {}
         logger.debug('memory dict initialized')
+
+        logger.debug(f'number of imports = {len(imports)}')
+        
         for idx,imp in enumerate(imports,start = 1):
             logger.debug(f'memory dict at the beginning of iteration({idx}) {memory = }')
             logger.debug(f'{imp.__dict__}')    
             
-            imported_from = imp.module if imp.level == 0 else (self._modules[0] if len(self._modules) == 1 else (".".join(mod for mod in self._modules[:-imp.level]))+("."+imp.module if imp.module is not None else ""))
+            imported_from = self._handle_import_name_resolution(imp)
             logger.debug(f'{imported_from = !r}')
             
             imports = [(name.name if name.asname is None else f"{name.name} as {name.asname}") for name in imp.names] 
-            logger.debug(f'{imports = !r}')
+            logger.debug(f'{imports = !r} {"relative_imports" if imp.level > 0 else "absolute_imports"}')
             
             memory |= {(name.asname or name.name): _Name(name = f'{imported_from}.{name.name}', alias = name.asname,imp_type = 'import_from') 
                                                          for name in imp.names}
             logger.debug(f'memory dict at the end of iteration({idx}) {memory = }')
             
             if imp.level > 0 or imp.module == self.package or imported_from.split('.')[0] == self.package:
-                current_package[("relative_imports" if imp.level > 0 else "absolute_imports")][imported_from] = imports
+                current_package[("relative_imports" if imp.level > 0 else "absolute_imports")][imported_from].extend(imports)
             else:
-                other_imports[imported_from] = imports 
+                other_imports[imported_from].extend(imports) 
         
         logger.debug(f'"from import" processing complete. Memory {memory}')
-        return {self.package: current_package, "external_imports": dict(other_imports)}, memory
+        return {self.package: {"relative_imports": list(current_package["relative_imports"]),
+                                "absolute_imports": list(current_package["absolute_imports"])}, 
+                "external_imports": dict(other_imports)}, memory
     
     def _parse_imports(self, imports: list[ast.Import], memory) -> list[str]:
         logger.debug('_parse_imports')
