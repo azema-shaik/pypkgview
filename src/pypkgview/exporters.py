@@ -221,7 +221,7 @@ class SqliteExporter:
                 for src, names in dct[module_name]["imports"]["external_imports"].items()
                 for name in names
             ])
-            print(dct[module_name]["imports"][discover.package])
+            
             cursor.executemany(import_stmt,[
                 {"module_id": idx, "source": src, 
                  "name": (m_name := name.split(" as "))[0].strip(), 
