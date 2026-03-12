@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* --- reset & base --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: #050508;
+            color: #d8dff0;
+            font-family: monospace;
+            padding: 32px;
+        }
+
+        /* --- header --- */
+        .header {
+            margin-bottom: 32px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            color: #ffffff;
+            margin-bottom: 6px;
+        }
+
+        .header p {
+            font-size: 12px;
+            color: #5a6080;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        /* --- stat cards --- */
+        .stats-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: #0e0e18;
+            border: 1px solid #1c1c30;
+            border-radius: 8px;
+            padding: 20px 24px;
+            flex: 1;
+        }
+
+        .stat-card .label {
+            font-size: 10px;
+            color: #5a6080;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .value {
+            font-size: 28px;
+            color: #56cfb2;
+            font-weight: 700;
+        }
+
+        /* --- insights --- */
+        .section-title {
+    font-size: 11px;
+    color: #56cfb2;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #1c1c30;
+    font-weight: 600;
+}
+
+        .insights-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .insight-card {
+            background: #0e0e18;
+            border: 1px solid #1c1c30;
+            border-left: 3px solid #56cfb2;
+            border-radius: 8px;
+            padding: 16px 20px;
+            flex: 1;
+        }
+
+        .insight-card .title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #56cfb2;
+            margin-bottom: 8px;
+        }
+
+        .insight-card .detail {
+            font-size: 13px;
+            color: #5a6080;
+            line-height: 1.7;
+        }
+
+        /* --- two column rows --- */
+        .row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .col {
+            flex: 1;
+            background: #0e0e18;
+            border: 1px solid #1c1c30;
+            border-radius: 8px;
+            padding: 20px 24px;
+        }
+
+        .col-title {
+            font-size: 10px;
+            color: #5a6080;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+        }
+        .col canvas {
+    height: 280px !important;
+}
+/* --- table --- */
+.table-section {
+    margin-bottom: 32px;
+}
+
+.table-section .section-title {
+    margin-bottom: 14px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+}
+
+thead tr {
+    border-bottom: 1px solid #1c1c30;
+}
+
+thead th {
+    text-align: left;
+    padding: 8px 12px;
+    font-size: 10px;
+    color: #5a6080;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+tbody tr {
+    border-bottom: 1px solid #1c1c30;
+}
+
+tbody tr:hover {
+    background: #1c1c30;
+}
+
+tbody td {
+    padding: 10px 12px;
+    color: #d8dff0;
+}
+
+tbody td:first-child {
+    color: #56cfb2;
+    font-size: 11px;
+}
+
+tbody td:last-child {
+    font-weight: 700;
+    color: #ffffff;
+}
+.card {
+    background: #0e0e18;
+    border: 1px solid #1c1c30;
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 32px;
+}
+/* --- donut legend --- */
+.donut-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.legend-label {
+    font-size: 12px;
+    color: #d8dff0;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.legend-detail {
+    font-size: 10px;
+    color: #5a6080;
+}
+.col canvas {
+    max-height: 220px;
+}
+        /* --- footer --- */
+.footer {
+    margin-top: 48px;
+    padding-top: 16px;
+    border-top: 1px solid #1c1c30;
+    font-size: 12px;
+    color: #56cfb2;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-style: italic;
+    font-weight: 600;
+}
+    </style>
+    
+    <script>
+        {{ chartjs_source }}
+    </script>
+    <title>{{ package_name }} - pypkgview</title>
+</head>
+
+<body>
+    <div class="header">
+        <h1>{{ package_name }}</h1>
+        <p>static analysis · {{ totals.modules }} modules</p>
+    </div>
+
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="label">modules</div>
+            <div class="value">{{ "{:,}".format(totals.modules) }}</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="label">classes</div>
+            <div class="value">{{ "{:,}".format(totals.classes) }}</div>
+
+        </div>
+
+        <div class="stat-card">
+            <div class="label">functions</div>
+            <div class="value">{{ "{:,}".format(totals.functions) }}</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="label">globals</div>
+            <div class="value">{{ "{:,}".format(totals.globals) }}</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="label">imports</div>
+            <div class="value">{{ "{:,}".format(totals.imports) }}</div>
+        </div>
+
+    </div>
+
+    <div class="section-title">insights</div>
+
+    <div class="insights-row">
+        {% for insight in insights %}
+        <div class="insight-card">
+            <div class="title">{{ insight.title }}</div>
+            <div class="detail">{{ insight.detail }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    <!-- donut chart -->
+    
+    <!-- composition + properties row -->
+     <div class="section-title">package overview</div>
+    <div class="row">
+
+        <div class="col">
+            <div class="col-title">import composition</div>
+            <canvas id="chart-donut"></canvas>
+        </div>
+
+        <div class="col">
+            <div class="col-title">class properties</div>
+            <canvas id="chart-class-radar"></canvas>
+        </div>
+
+        <div class="col">
+            <div class="col-title">function properties</div>
+            <canvas id="chart-func-radar"></canvas>
+        </div>
+
+    </div>
+
+    <div class="section-title">dependencies</div>
+    <div class="row">
+        <div class="col">
+            <div class="col-title">external imports</div>
+            <canvas id="chart-external-imports"></canvas>
+        </div>
+        <div class="col">
+            <div class="col-title">internal imports</div>
+            <canvas id="chart-internal-imports"></canvas>
+        </div>
+    </div>
+
+    <!-- row 4 — design patterns -->
+    <div class="section-title">design patterns</div>
+<div class="row">
+    <div class="col">
+        <div class="col-title">base classes</div>
+        <canvas id="chart-base-classes"></canvas>
+    </div>
+    <div class="col">
+        <div class="col-title">decorators</div>
+        <canvas id="chart-decorators"></canvas>
+    </div>
+</div>
+
+<div class="section-title">top modules by size</div>
+<div class="card">
+    
+<!-- top modules table -->
+
+    <table>
+        <thead>
+            <tr>
+                <th>module</th>
+                <th>classes</th>
+                <th>functions</th>
+                <th>globals</th>
+                <th>imports</th>
+                <th>total</th>
+            </tr>
+        </thead>
+        <tbody>
+    {% for module in top_modules %}
+    <tr>
+        <td>{{ module.name }}</td>
+        <td>{{ "{:,}".format(module.classes) }}</td>
+        <td>{{ "{:,}".format(module.functions) }}</td>
+        <td>{{ "{:,}".format(module.globals) }}</td>
+        <td>{{ "{:,}".format(module.imports) }}</td>
+        <td>{{ "{:,}".format(module.total) }}</td>
+    </tr>
+    {% endfor %}
+</tbody>
+    </table>
+</div>
+</div>
+
+<div class="footer">
+    pypkgview · built by a curious developer for curious developers
+</div>
+
+    <script>
+        new Chart("chart-external-imports", {
+            type: "bar",
+            data: {
+                labels: {{ top_external_imports | map(attribute = "name") | list | tojson }},
+            datasets: [{
+                data: {{ top_external_imports | map(attribute = "count") | list | tojson }},
+            backgroundColor: "#56cfb2",
+            borderRadius: 4,
+        }]
+    },
+            options: {
+            indexAxis: "y",
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: {
+                    ticks: { color: "#5a6080", font: { size: 10 } },
+                    grid: { color: "#1c1c30" }
+                },
+                y: {
+                    ticks: { color: "#5a6080", font: { size: 10 } },
+                    grid: { color: "#1c1c30" }
+                }
+            }
+        }
+});
+new Chart("chart-internal-imports", {
+    type: "bar",
+    data: {
+        labels: {{ top_internal_imports | map(attribute="name") | list | tojson }},
+        datasets: [{
+            data:  {{ top_internal_imports | map(attribute="count") | list | tojson }},
+            backgroundColor: "#4ea8de",
+            borderRadius: 4,
+        }]
+    },
+    options: {
+        indexAxis: "y",
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            x: {
+                ticks: { color: "#5a6080", font: { size: 10 } },
+                grid:  { color: "#1c1c30" }
+            },
+            y: {
+                ticks: { color: "#5a6080", font: { size: 10 } },
+                grid:  { color: "#1c1c30" }
+            }
+        }
+    }
+});
+
+new Chart("chart-base-classes", {
+    type: "bar",
+    data: {
+        labels: {{ top_bases | map(attribute="name") | list | tojson }},
+        datasets: [{
+            data:  {{ top_bases | map(attribute="count") | list | tojson }},
+            backgroundColor: "#ff4d6d",
+            borderRadius: 4,
+        }]
+    },
+    options: {
+        indexAxis: "y",
+        plugins: { legend: { display: false } },
+        scales: {
+            x: {
+                ticks: { color: "#5a6080", font: { size: 10 } },
+                grid:  { color: "#1c1c30" }
+            },
+            y: {
+                ticks: { color: "#5a6080", font: { size: 10 } },
+                grid:  { color: "#1c1c30" }
+            }
+        }
+    }
+});
+
+new Chart("chart-decorators", {
+    type: "bar",
+    data: {
+        labels: {{ top_decorators | map(attribute="name") | list | tojson }},
+        datasets: [{
+            data:  {{ top_decorators | map(attribute="count") | list | tojson }},
+            backgroundColor: "#facc15",
+            borderRadius: 4,
+        }]
+    },
+    options: {
+        indexAxis: "y",
+        plugins: { legend: { display: false } },
+        scales: {
+            x: {
+                ticks: { color: "#5a6080", font: { size: 10 } },
+                grid:  { color: "#1c1c30" }
+            },
+            y: {
+                ticks: { color: "#5a6080", font: { size: 10 } },
+                grid:  { color: "#1c1c30" }
+            }
+        }
+    }
+});
+new Chart("chart-donut", {
+    type: "doughnut",
+    data: {
+        labels: ["stdlib", "internal", "third party"],
+        datasets: [{
+            data: [
+                {{ import_profile.stdlib }},
+                {{ import_profile.internal }},
+                {{ import_profile.third_party }},
+            ],
+            backgroundColor: [
+                "#56cfb2",
+                "#4ea8de",
+                "#facc15",
+            ],
+            borderWidth: 0,
+            hoverOffset: 8,
+        }]
+    },
+    options: {
+        cutout: "65%",
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        const total = context.dataset.data
+                            .reduce((a, b) => a + b, 0);
+                        const pct = Math.round(
+                            context.parsed / total * 100
+                        );
+                        return ` ${context.label}: ${context.parsed.toLocaleString()} (${pct}%)`;
+                    }
+                }
+            }
+        }
+    }
+});
+
+new Chart("chart-class-radar", {
+    type: "bar",
+    data: {
+        labels: [
+            "decorated",
+            "contextmanager",
+            "nested",
+            "has metaclass",
+            "iterable",
+            "iterator",
+            "descriptor"
+        ],
+        datasets: [{
+            data: [
+                {{ class_properties.decorated }},
+                {{ class_properties.contextmanager }},
+                {{ class_properties.nested }},
+                {{ class_properties.has_metaclass }},
+                {{ class_properties.iterable }},
+                {{ class_properties.iterator }},
+                {{ class_properties.descriptor }},
+            ],
+            backgroundColor: "#ff4d6d",
+            borderRadius: 4,
+            barThickness: 4,  
+        }]
+    },
+    options: {
+        indexAxis: "y",
+        plugins: { legend: { display: false } },
+        scales: {
+            x: {
+                ticks: { color: "#5a6080", font: { size: 10 } },
+                grid:  { color: "#1c1c30" }
+            },
+            y: {
+                ticks: { color: "#5a6080", font: { size: 10 } },
+                grid:  { color: "#1c1c30" }
+            }
+        }
+    }
+});
+
+new Chart("chart-func-radar", {
+    type: "bar",
+    data: {
+        labels: [
+            "decorated",
+            "generator",
+            "async",
+            "gen delegation"
+        ],
+        datasets: [{
+            data: [
+                {{ func_properties.decorated }},
+                {{ func_properties.generator }},
+                {{ func_properties.async_functions }},
+                {{ func_properties.gen_delegation }},
+            ],
+            backgroundColor: "#4ea8de",
+            borderRadius: 4,
+            barThickness: 4,  
+        }]
+    },
+    options: {
+        indexAxis: "y",
+        plugins: { legend: { display: false } },
+        scales: {
+            x: {
+                ticks: { color: "#5a6080", font: { size: 10 } },
+                grid:  { color: "#1c1c30" }
+            },
+            y: {
+                ticks: { color: "#5a6080", font: { size: 10 } },
+                grid:  { color: "#1c1c30" }
+            }
+        }
+    }
+});
+
+
+    </script>
+
+
+</body>
+
+</html>
