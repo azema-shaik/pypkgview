@@ -105,12 +105,23 @@ class SqliteExporter:
             is_async INTEGER,
             is_generator INTEGER,
             has_generator_delegation INTEGER);
+        
+        DROP TABLE IF EXISTS methods;
+            CREATE TABLE methods (
+            id INTEGER PRIMARY KEY ,
+            class_id INTEGER REFERENCES classes(id),
+            name TEXT,
+            is_decorated INTEGER,
+            is_async INTEGER,
+            is_generator INTEGER,
+            has_generator_delegation INTEGER);
 
         DROP TABLE IF EXISTS decorators;
         CREATE TABLE decorators (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             class_id INTEGER REFERENCES classes(id),
             function_id INTEGER REFERENCES functions(id),
+            method_id INTEGER REFERENCES methods(id),
             name TEXT);
 
         DROP TABLE IF EXISTS constants;                     
@@ -132,13 +143,16 @@ class SqliteExporter:
         );
         CREATE INDEX idx_imports_name ON imports(name);
         CREATE INDEX idx_functions_name ON functions(name);
+        CREATE INDEX idx_methods_name ON methods(name);
         CREATE INDEX idx_classes_name ON classes(name);
         CREATE INDEX idx_functions_module ON functions(module_id);
         CREATE INDEX idx_classes_module ON classes(module_id);
+        CREATE INDEX idx_methods_class ON methods(class_id);
         """)
         logger.debug('Finished creating table')
         class_id = 0 
         func_id = 0
+        method_id = 0
         for idx, dct in enumerate(discover, start = 1):
             module_name = list(dct)[0]
             print(f'Parsing: \033[1;38;5;10m{module_name!r}\033[0m')
@@ -152,11 +166,14 @@ class SqliteExporter:
                                :parent_class, :has_metaclass,:is_contextmanager,
                                :is_iterable, :is_iterator)"""
             bases_stmt = """INSERT INTO bases(class_id, name) VALUES (:class_id, :name)"""
-            decorator_stmt = """INSERT INTO decorators(class_id, function_id, name) VALUES 
-                            (:class_id, :function_id, :name)"""
+            decorator_stmt = """INSERT INTO decorators(class_id, function_id, method_id,name) VALUES 
+                            (:class_id, :function_id, :method_id,:name)"""
             functions_stmt = """INSERT INTO functions 
                 (id, module_id, name, is_async, is_generator, has_generator_delegation, is_decorated) VALUES
                 (:id, :module_id, :name, :is_async, :is_generator, :has_generator_delegation, :is_decorated)"""
+            methods_stmt = """INSERT INTO methods
+                (id, class_id, name, is_async, is_generator, has_generator_delegation, is_decorated) VALUES
+                (:id, :class_id, :name, :is_async, :is_generator, :has_generator_delegation, :is_decorated)"""
             
             for class_name, cls in dct[module_name]["classes"].items():
                 class_id += 1
@@ -175,8 +192,24 @@ class SqliteExporter:
                                {"class_id": class_id, "name": base}
                                for id, base in enumerate(cls["bases"], start = 1)])
                 cursor.executemany(decorator_stmt,[
-                               {"class_id": class_id, "function_id": None, "name": dec}
+                               {"class_id": class_id, "function_id": None, "method_id":None,"name": dec}
                                for id, dec in enumerate(cls["decorators"], start = 1)])
+                
+                for method_name, method in cls["methods"].items():
+                    method_id += 1
+                    cursor.execute(methods_stmt,
+                    {"id": method_id, "class_id": class_id, "name": method_name, 
+                     "is_async": int(method["is_async"]),
+                     "is_generator": int(method["is_generator"]), 
+                     'is_decorated': int(method['is_decorated']),
+                     "has_generator_delegation": int(method["has_generator_delegation"])})
+                
+                    cursor.executemany(decorator_stmt, 
+                                [{"class_id": None, "function_id": None,"method_id": method_id, "name": dec}
+                                    for dec in method["decorators"]
+                                ])
+
+                
             
             for func_name, func in dct[module_name]["functions"].items():
                 
@@ -189,7 +222,7 @@ class SqliteExporter:
                      "has_generator_delegation": int(func["has_generator_delegation"])})
                 
                 cursor.executemany(decorator_stmt, 
-                               [{"class_id": None, "function_id": func_id, "name": dec}
+                               [{"class_id": None, "function_id": func_id, "method_id":None,"name": dec}
                                    for dec in func["decorators"]
                                ])
             cursor.executemany("""INSERT INTO constants(module_id,name,type)

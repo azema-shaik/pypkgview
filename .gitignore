@@ -7,7 +7,7 @@ __pycache__/
 _types.py
 *.sqlite*
 *.yaml
-skill.md
+*skill.md
 # C extensions
 *.so
 

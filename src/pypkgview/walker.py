@@ -111,11 +111,12 @@ class BaseModuleWalker(ABC):
                 bases += [b]
             clss_dct[cls.name] = {"bases": bases, 
                                   "decorators": self._handle_decorator(cls, memory), 
-                                  'is_contextmanager': self._parse_context_manager(cls.method),
+                                  'is_contextmanager': self._parse_context_manager(cls.methods),
+                                  'methods': self._parse_function(cls.methods,memory),
                                   'is_nested': cls.is_nested_class, 'parent_class': cls.parent_class,
                                   "is_descriptor":cls.is_descriptor,
-                                  "is_iterator": self._parse_iterator(cls.method),
-                                  'is_iterable': self._parse_iterable(cls.method),
+                                  "is_iterator": self._parse_iterator(cls.methods),
+                                  'is_iterable': self._parse_iterable(cls.methods),
                                   "metadata": self._parse_keywords(cls, memory)} | ({"descriptor_type": cls.descriptor_type} if cls.is_descriptor else {})
         return dict(clss_dct)
     

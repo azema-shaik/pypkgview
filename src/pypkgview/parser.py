@@ -43,24 +43,6 @@ class NodeVisitor(ast.NodeVisitor):
         logger.debug(f'{node.name!r} is method {is_method!r}')
         
         if is_method:
-            method_type = list(filter(
-                lambda x: x in ["staticmethod", "property", "classmethod", "setter", "deleter"],
-                map(lambda x: getattr(x,{ast.Name:"id", ast.Attribute: "attr"}.get(x.__class__)) if not isinstance(x,ast.Call) else "", 
-                    node.decorator_list)
-                ))
-            
-            logger.debug(f'{method_type = !r}')
-
-            match method_type:
-                
-                case []:
-                    self._current_class.method.append(node)
-                case ["staticmethod"]:
-                    self._current_class.staticmethod.append(node)
-                case ["classmethod"]:
-                    self._current_class.classmethod.append(node)
-                case ["property" | "setter" | "deleter"]:
-                    self._current_class.property.append(node)
                 
             if node.name in ["__get__","__set__", "__delete__"]:
                 self._current_class.is_descriptor = True 
@@ -71,6 +53,7 @@ class NodeVisitor(ast.NodeVisitor):
                     case "__get__":
                         if self._current_class.descriptor_type is None: 
                             self._current_class.descriptor_type = "non_data"
+            self._current_class.methods.append(node)
 
 
         else:
