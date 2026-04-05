@@ -18,7 +18,14 @@ class Class:
     is_nested_class: bool = field(default = False, repr = False)
     parent_class: str| None = field(default = None, repr = True)
 
-
+@dataclass 
+class Callable:
+    name: str
+    decorators: list[ast.Expr]
+    is_async: bool 
+    is_generator: bool 
+    has_generator_delegation: bool 
+    
 
 class Discover(Protocol):
     @property

@@ -9,6 +9,7 @@ class NodeVisitor(ast.NodeVisitor):
         super().__init__()
         self.classes: list[Class] = []
         self._classes_stack: list[Class] = [] 
+        self._functions_stack: list[ast.FunctionDef] = []
         self.functions: list[ast.FunctionDef] = []
         self.imports: list[ast.Import] = []
         self.import_froms: list[ast.ImportFrom] = []
@@ -34,10 +35,16 @@ class NodeVisitor(ast.NodeVisitor):
     def _current_class(self) -> Class | None:
         logger.debug(f'{self._classes_stack = !r}')
         return self._classes_stack[-1] if self._classes_stack else None
+    
+    @property
+    def _current_function(self) -> ast.FunctionDef|None:
+        logger.debug(f'{self._functions_stack = !r}')
+        return self._functions_stack[-1] if self._functions_stack else None
         
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         logger.debug('visit_FunctionDef called.')
+        
 
         is_method = self._current_class is not None 
         logger.debug(f'{node.name!r} is method {is_method!r}')
@@ -58,6 +65,10 @@ class NodeVisitor(ast.NodeVisitor):
 
         else:
             self.functions.append(node)
+
+        self._functions_stack.append(node) 
+        self.generic_visit(node)
+        self._functions_stack.pop()
         
     visit_AsyncFunctionDef = visit_FunctionDef
     def visit_Import(self, node: ast.Import) -> None:
@@ -71,3 +82,10 @@ class NodeVisitor(ast.NodeVisitor):
     def visit_Assign(self, node: ast.Assign) -> None:
         if self._current_class is None:
             self.variables.append(node)
+
+    def visit_Raise(self, node: ast.Raise) -> None:
+        exc: ast.Call|ast.Name = node.exc 
+        if isinstance(exc.func, ast.Call):
+            exception = ast.unparse(exc.func)
+        
+            
