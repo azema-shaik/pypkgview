@@ -1,607 +1,618 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        /* --- reset & base --- */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            background: #050508;
-            color: #d8dff0;
-            font-family: monospace;
-            padding: 32px;
-        }
-
-        /* --- header --- */
-        .header {
-            margin-bottom: 32px;
-        }
-
-        .header h1 {
-            font-size: 28px;
-            color: #ffffff;
-            margin-bottom: 6px;
-        }
-
-        .header p {
-            font-size: 12px;
-            color: #5a6080;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-        }
-
-        /* --- stat cards --- */
-        .stats-row {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 32px;
-        }
-
-        .stat-card {
-            background: #0e0e18;
-            border: 1px solid #1c1c30;
-            border-radius: 8px;
-            padding: 20px 24px;
-            flex: 1;
-        }
-
-        .stat-card .label {
-            font-size: 10px;
-            color: #5a6080;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            margin-bottom: 8px;
-        }
-
-        .stat-card .value {
-            font-size: 28px;
-            color: #56cfb2;
-            font-weight: 700;
-        }
-
-        /* --- insights --- */
-        .section-title {
-    font-size: 11px;
-    color: #56cfb2;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    margin-bottom: 14px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid #1c1c30;
-    font-weight: 600;
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ pkg_name }} · Inspector</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,600;1,300&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#050508;--surface:#0e0e18;--surface2:#141422;--border:#1c1c30;
+  --muted:#2a2a44;--text-dim:#5a6080;--text:#d8dff0;--bright:#ffffff;
+  --accent:#56cfb2;--blue:#4ea8de;--purple:#7c6af7;--red:#ff4d6d;--yellow:#facc15;
+  --sw:220px;--th:50px;
 }
-
-        .insights-row {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 32px;
-        }
-
-        .insight-card {
-            background: #0e0e18;
-            border: 1px solid #1c1c30;
-            border-left: 3px solid #56cfb2;
-            border-radius: 8px;
-            padding: 16px 20px;
-            flex: 1;
-        }
-
-        .insight-card .title {
-            font-size: 15px;
-            font-weight: 700;
-            color: #56cfb2;
-            margin-bottom: 8px;
-        }
-
-        .insight-card .detail {
-            font-size: 13px;
-            color: #5a6080;
-            line-height: 1.7;
-        }
-
-        /* --- two column rows --- */
-        .row {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 32px;
-        }
-
-        .col {
-            flex: 1;
-            background: #0e0e18;
-            border: 1px solid #1c1c30;
-            border-radius: 8px;
-            padding: 20px 24px;
-        }
-
-        .col-title {
-            font-size: 10px;
-            color: #5a6080;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            margin-bottom: 16px;
-        }
-        .col canvas {
-    height: 280px !important;
-}
-/* --- table --- */
-.table-section {
-    margin-bottom: 32px;
-}
-
-.table-section .section-title {
-    margin-bottom: 14px;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 11px;
-}
-
-thead tr {
-    border-bottom: 1px solid #1c1c30;
-}
-
-thead th {
-    text-align: left;
-    padding: 8px 12px;
-    font-size: 10px;
-    color: #5a6080;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    font-weight: 600;
-}
-
-tbody tr {
-    border-bottom: 1px solid #1c1c30;
-}
-
-tbody tr:hover {
-    background: #1c1c30;
-}
-
-tbody td {
-    padding: 10px 12px;
-    color: #d8dff0;
-}
-
-tbody td:first-child {
-    color: #56cfb2;
-    font-size: 11px;
-}
-
-tbody td:last-child {
-    font-weight: 700;
-    color: #ffffff;
-}
-.card {
-    background: #0e0e18;
-    border: 1px solid #1c1c30;
-    border-radius: 8px;
-    padding: 20px 24px;
-    margin-bottom: 32px;
-}
-/* --- donut legend --- */
-.donut-legend {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-}
-
-.legend-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.legend-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    flex-shrink: 0;
-}
-
-.legend-label {
-    font-size: 12px;
-    color: #d8dff0;
-    font-weight: 600;
-    margin-bottom: 2px;
-}
-
-.legend-detail {
-    font-size: 10px;
-    color: #5a6080;
-}
-.col canvas {
-    max-height: 220px;
-}
-        /* --- footer --- */
-.footer {
-    margin-top: 48px;
-    padding-top: 16px;
-    border-top: 1px solid #1c1c30;
-    font-size: 12px;
-    color: #56cfb2;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    font-style: italic;
-    font-weight: 600;
-}
-    </style>
-    
-    <script>
-        {{ chartjs_source }}
-    </script>
-    <title>{{ package_name }} - pypkgview</title>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100vw;height:100vh;overflow:hidden;background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;}
+#topbar{position:fixed;top:0;left:0;right:0;height:var(--th);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;z-index:200;}
+#topbar .brand{width:var(--sw);flex-shrink:0;height:100%;display:flex;align-items:center;gap:10px;padding:0 18px;border-right:1px solid var(--border);}
+.brand-icon{width:26px;height:26px;border-radius:5px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:#050508;flex-shrink:0;}
+.brand-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--bright);}
+.brand-sub{font-size:8px;color:var(--text-dim);letter-spacing:.1em;text-transform:uppercase;}
+#topbar-pills{flex:1;display:flex;align-items:center;gap:20px;padding:0 24px;}
+.tp{font-size:10px;color:var(--text-dim);display:flex;align-items:center;gap:6px;}
+.tp-val{color:var(--bright);font-weight:600;}
+#sidebar{position:fixed;top:var(--th);left:0;width:var(--sw);height:calc(100vh - var(--th));background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100;padding:12px 0 0;}
+.nav-group-label{font-size:8px;color:var(--muted);letter-spacing:.16em;text-transform:uppercase;padding:10px 18px 5px;font-weight:600;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 18px;cursor:pointer;font-size:11px;color:var(--text-dim);border-left:2px solid transparent;transition:color .12s,background .12s;user-select:none;}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,.025);}
+.nav-item.active{color:var(--accent);border-left-color:var(--accent);background:rgba(86,207,178,.06);}
+.nav-icon{font-size:12px;width:15px;text-align:center;flex-shrink:0;}
+.nav-hr{height:1px;background:var(--border);margin:8px 18px;}
+.sidebar-foot{margin-top:auto;padding:12px 18px;font-size:8px;color:var(--muted);border-top:1px solid var(--border);letter-spacing:.06em;font-style:italic;}
+#content{position:fixed;top:var(--th);left:var(--sw);width:calc(100vw - var(--sw));height:calc(100vh - var(--th));overflow:hidden;}
+.panel{display:none;width:100%;height:100%;padding:18px;flex-direction:column;gap:12px;overflow:hidden;}
+.panel.active{display:flex;}
+.ph{display:flex;align-items:baseline;gap:10px;flex-shrink:0;}
+.ph-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--bright);}
+.ph-sub{font-size:9px;color:var(--text-dim);}
+.card-row{display:flex;gap:10px;flex-shrink:0;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:14px 16px;flex:1;overflow:hidden;}
+.card.bl{border-left:3px solid var(--accent);}
+.card.bl-blue{border-left:3px solid var(--blue);}
+.card.bl-red{border-left:3px solid var(--red);}
+.card.bl-yellow{border-left:3px solid var(--yellow);}
+.cl{font-size:8px;color:var(--text-dim);letter-spacing:.12em;text-transform:uppercase;margin-bottom:7px;font-weight:600;}
+.cv{font-size:24px;color:var(--accent);font-weight:600;line-height:1;}
+.cv.blue{color:var(--blue);}.cv.purple{color:var(--purple);}.cv.red{color:var(--red);}.cv.yellow{color:var(--yellow);}
+.it{font-size:11px;font-weight:600;color:var(--accent);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.id{font-size:9px;color:var(--text-dim);line-height:1.6;}
+.row{display:flex;gap:10px;flex:1;overflow:hidden;}
+.col{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:14px;display:flex;flex-direction:column;overflow:hidden;}
+.col-label{font-size:8px;color:var(--text-dim);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;flex-shrink:0;font-weight:600;}
+.chart{flex:1;overflow:hidden;position:relative;}
+.chart svg{width:100%;height:100%;}
+.tbl-wrap{flex:1;overflow-y:auto;border:1px solid var(--border);border-radius:7px;}
+table{width:100%;border-collapse:collapse;font-size:10px;}
+thead tr{position:sticky;top:0;z-index:10;}
+thead th{background:var(--surface2);padding:9px 12px;text-align:left;font-size:8px;color:var(--text-dim);letter-spacing:.1em;text-transform:uppercase;font-weight:600;border-bottom:1px solid var(--border);cursor:pointer;user-select:none;}
+thead th:hover{color:var(--text);}
+thead th.asc::after{content:' ↑';color:var(--accent);}
+thead th.desc::after{content:' ↓';color:var(--accent);}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s;}
+tbody tr:hover{background:rgba(255,255,255,.02);}
+tbody td{padding:7px 12px;color:var(--text);}
+tbody td:first-child{color:var(--accent);font-size:9px;max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tn{color:var(--bright)!important;font-weight:600;text-align:right;}
+.mbt{height:3px;background:var(--border);border-radius:2px;overflow:hidden;width:70px;}
+.mbf{height:100%;border-radius:2px;}
+.search-row{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.si{background:var(--surface);border:1px solid var(--border);border-radius:5px;color:var(--bright);font-family:'JetBrains Mono',monospace;font-size:11px;padding:7px 12px;width:260px;outline:none;transition:border-color .15s;}
+.si:focus{border-color:var(--accent);}
+.si::placeholder{color:var(--muted);}
+.sh{font-size:9px;color:var(--text-dim);}
+.dl{display:flex;flex-direction:column;justify-content:center;gap:11px;}
+.dl-i{display:flex;align-items:center;gap:9px;}
+.dl-d{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.dl-n{font-size:10px;color:var(--text);font-weight:600;}
+.dl-c{font-size:9px;color:var(--text-dim);margin-left:auto;}
+#tip{position:fixed;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:10px;pointer-events:none;display:none;z-index:999;max-width:320px;box-shadow:0 4px 24px rgba(0,0,0,.6);}
+#tip b{color:var(--bright);display:block;margin-bottom:2px;}
+#tip span{color:var(--text-dim);word-break:break-all;}
+.inh-link{fill:none;stroke-width:1.4;opacity:.4;}
+.inh-node circle{transition:r .1s;cursor:default;}
+.inh-node.dim circle,.inh-node.dim text{opacity:.06;}
+.inh-link.dim{opacity:.04;}
+.tick text{fill:var(--text-dim)!important;font-family:'JetBrains Mono',monospace!important;font-size:9px!important;}
+.tick line,.domain{stroke:var(--border)!important;}
+</style>
 </head>
-
 <body>
-    <div class="header">
-        <h1>{{ package_name }}</h1>
-        <p>static analysis · {{ totals.modules }} modules</p>
+
+<header id="topbar">
+  <div class="brand">
+    <div class="brand-icon" id="brand-icon">?</div>
+    <div><div class="brand-name" id="brand-name">—</div><div class="brand-sub">package inspector</div></div>
+  </div>
+  <div id="topbar-pills">
+    <div class="tp"><span class="tp-val" id="tp-mod">0</span> modules</div>
+    <div class="tp"><span class="tp-val" id="tp-cls">0</span> classes</div>
+    <div class="tp"><span class="tp-val" id="tp-fn">0</span> functions</div>
+    <div class="tp"><span class="tp-val" id="tp-mth">0</span> methods</div>
+    <div class="tp"><span class="tp-val" id="tp-imp">0</span> imports</div>
+  </div>
+</header>
+
+<nav id="sidebar">
+  <div class="nav-group-label">Analysis</div>
+  <div class="nav-item active" data-p="overview"><span class="nav-icon">◈</span>Overview</div>
+  <div class="nav-item" data-p="imports"><span class="nav-icon">⟶</span>Imports</div>
+  <div class="nav-item" data-p="hubs"><span class="nav-icon">⬡</span>Hub Analysis</div>
+  <div class="nav-hr"></div>
+  <div class="nav-group-label">Structure</div>
+  <div class="nav-item" data-p="inheritance"><span class="nav-icon">⊤</span>Inheritance</div>
+  {% if metaclass_records %}
+  <div class="nav-item" data-p="metaclass"><span class="nav-icon">⊤</span>Metaclass</div>
+  {% endif %}
+  <div class="nav-item" data-p="classes"><span class="nav-icon">◻</span>Classes</div>
+  <div class="nav-item" data-p="functions"><span class="nav-icon">λ</span>Functions</div>
+  <div class="nav-item" data-p="methods"><span class="nav-icon">λ</span>Methods</div>
+  <div class="nav-hr"></div>
+  <div class="nav-group-label">Tables</div>
+  <div class="nav-item" data-p="api"><span class="nav-icon">≡</span>API Surface</div>
+  <div class="sidebar-foot">pypkgview · <span id="sf-pkg">—</span></div>
+</nav>
+
+<div id="content">
+  <div class="panel active" id="panel-overview">
+    <div class="ph"><div class="ph-title">Overview</div><div class="ph-sub">high-level package metrics</div></div>
+    <div class="card-row">
+      <div class="card"><div class="cl">Modules</div><div class="cv" id="sv-mod">0</div></div>
+      <div class="card"><div class="cl">Classes</div><div class="cv blue" id="sv-cls">0</div></div>
+      <div class="card"><div class="cl">Functions</div><div class="cv purple" id="sv-fn">0</div></div>
+      <div class="card"><div class="cl">Methods</div><div class="cv red" id="sv-mth">0</div></div>
+      <div class="card"><div class="cl">Imports</div><div class="cv yellow" id="sv-imp">0</div></div>
     </div>
-
-    <div class="stats-row">
-        <div class="stat-card">
-            <div class="label">modules</div>
-            <div class="value">{{ "{:,}".format(totals.modules) }}</div>
-        </div>
-
-        <div class="stat-card">
-            <div class="label">classes</div>
-            <div class="value">{{ "{:,}".format(totals.classes) }}</div>
-
-        </div>
-
-        <div class="stat-card">
-            <div class="label">functions</div>
-            <div class="value">{{ "{:,}".format(totals.functions) }}</div>
-        </div>
-
-        <div class="stat-card">
-            <div class="label">globals</div>
-            <div class="value">{{ "{:,}".format(totals.globals) }}</div>
-        </div>
-
-        <div class="stat-card">
-            <div class="label">imports</div>
-            <div class="value">{{ "{:,}".format(totals.imports) }}</div>
-        </div>
-
-    </div>
-
-    <div class="section-title">insights</div>
-
-    <div class="insights-row">
-        {% for insight in insights %}
-        <div class="insight-card">
-            <div class="title">{{ insight.title }}</div>
-            <div class="detail">{{ insight.detail }}</div>
-        </div>
-        {% endfor %}
-    </div>
-    <!-- donut chart -->
-    
-    <!-- composition + properties row -->
-     <div class="section-title">package overview</div>
     <div class="row">
-
-        <div class="col">
-            <div class="col-title">import composition</div>
-            <canvas id="chart-donut"></canvas>
-        </div>
-
-        <div class="col">
-            <div class="col-title">class properties</div>
-            <canvas id="chart-class-radar"></canvas>
-        </div>
-
-        <div class="col">
-            <div class="col-title">function properties</div>
-            <canvas id="chart-func-radar"></canvas>
-        </div>
-
+      <div style="display:flex;flex-direction:column;gap:10px;width:280px;flex-shrink:0;">
+        <div class="card bl"        style="flex:1;"><div class="cl">Highest Fan-out</div><div class="it" id="ins-fo-n">—</div><div class="id" id="ins-fo-d">—</div></div>
+        <div class="card bl-blue"   style="flex:1;"><div class="cl">Highest Fan-in</div><div class="it" id="ins-fi-n">—</div><div class="id" id="ins-fi-d">—</div></div>
+        <div class="card bl-yellow" style="flex:1;"><div class="cl">Top Decorator</div><div class="it" id="ins-dc-n">—</div><div class="id" id="ins-dc-d">—</div></div>
+        <div class="card bl-red"    style="flex:1;"><div class="cl">Top Base Class</div><div class="it" id="ins-bc-n">—</div><div class="id" id="ins-bc-d">—</div></div>
+      </div>
+      <div class="col" style="max-width:240px;flex-shrink:0;">
+        <div class="col-label">Import Types</div>
+        <div class="chart" id="ch-donut"></div>
+      </div>
+      <div class="card" style="width:170px;flex-shrink:0;justify-content:center;display:flex;flex-direction:column;">
+        <div class="cl" style="margin-bottom:12px;">Breakdown</div>
+        <div class="dl" id="donut-leg"></div>
+      </div>
+      <div class="col">
+        <div class="col-label">Class Characteristics</div>
+        <div class="chart" id="ch-cls-ov"></div>
+      </div>
     </div>
+  </div>
 
-    <div class="section-title">dependencies</div>
+  <div class="panel" id="panel-imports">
+    <div class="ph"><div class="ph-title">Import Analysis</div><div class="ph-sub">top imported names by frequency</div></div>
     <div class="row">
-        <div class="col">
-            <div class="col-title">external imports</div>
-            <canvas id="chart-external-imports"></canvas>
-        </div>
-        <div class="col">
-            <div class="col-title">internal imports</div>
-            <canvas id="chart-internal-imports"></canvas>
-        </div>
+      <div class="col"><div class="col-label">External Imports · top 15</div><div class="chart" id="ch-ext"></div></div>
+      <div class="col"><div class="col-label">Internal Imports · top 15</div><div class="chart" id="ch-int"></div></div>
     </div>
+  </div>
 
-    <!-- row 4 — design patterns -->
-    <div class="section-title">design patterns</div>
-<div class="row">
-    <div class="col">
-        <div class="col-title">base classes</div>
-        <canvas id="chart-base-classes"></canvas>
+  <div class="panel" id="panel-hubs">
+    <div class="ph"><div class="ph-title">Hub Analysis</div><div class="ph-sub">fan-in vs fan-out · green = core · red = high coupling</div></div>
+    <div class="row">
+      <div class="col" style="flex:1.4;"><div class="col-label">Fan-in vs Fan-out</div><div class="chart" id="ch-scatter"></div></div>
+      <div class="col"><div class="col-label">Top by Fan-in</div><div class="chart" id="ch-fanin"></div></div>
+      <div class="col"><div class="col-label">Top by Fan-out</div><div class="chart" id="ch-fanout"></div></div>
     </div>
-    <div class="col">
-        <div class="col-title">decorators</div>
-        <canvas id="chart-decorators"></canvas>
+  </div>
+
+  <div class="panel" id="panel-inheritance">
+    <div class="ph"><div class="ph-title">Inheritance Tree</div><div class="ph-sub">vertical hierarchy · scroll=zoom · drag=pan</div></div>
+    <div class="search-row">
+      <input class="si" id="inh-search" placeholder="search class or module…">
+      <span class="sh" id="inh-hint">type to highlight · hover for details</span>
     </div>
+    <div class="col" style="flex:1;"><div class="chart" id="ch-inh"></div></div>
+  </div>
+
+  {% if metaclass_records %}
+  <div class="panel" id="panel-metaclass">
+    <div class="ph"><div class="ph-title">Metaclass Tree</div><div class="ph-sub">vertical hierarchy · scroll=zoom · drag=pan</div></div>
+    <div class="search-row">
+      <input class="si" id="inh-search" placeholder="search class or module…">
+      <span class="sh" id="inh-hint">type to highlight · hover for details</span>
+    </div>
+    <div class="col" style="flex:1;"><div class="chart" id="ch-meta"></div></div>
+  </div>
+  {% endif %}
+
+  <div class="panel" id="panel-classes">
+    <div class="ph"><div class="ph-title">Classes</div><div class="ph-sub">characteristics and most-used base classes</div></div>
+    <div class="row">
+      <div class="col" style="flex:.7;"><div class="col-label">Class Traits</div><div class="chart" id="ch-cls-traits"></div></div>
+      <div class="col"><div class="col-label">Top Base Classes · top 15</div><div class="chart" id="ch-bases"></div></div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-functions">
+    <div class="ph"><div class="ph-title">Functions</div><div class="ph-sub">traits and decorator usage</div></div>
+    <div class="row">
+      <div class="col" style="flex:.6;"><div class="col-label">Function Traits</div><div class="chart" id="ch-fn-traits"></div></div>
+      <div class="col"><div class="col-label">Top Function Decorators · top 15</div><div class="chart" id="ch-decs"></div></div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-methods">
+    <div class="ph"><div class="ph-title">Methods</div><div class="ph-sub">traits and decorator usage</div></div>
+    <div class="row">
+      <div class="col" style="flex:.6;"><div class="col-label">Method Traits</div><div class="chart" id="ch-meth-traits"></div></div>
+      <div class="col"><div class="col-label">Top Method Decorators · top 15</div><div class="chart" id="ch-meth-decs"></div></div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-api">
+    <div class="ph"><div class="ph-title">API Surface</div><div class="ph-sub">per-module counts · click header to sort</div></div>
+    <div class="tbl-wrap">
+      <table id="api-tbl">
+        <thead><tr>
+          <th data-col="name">Module</th>
+          <th data-col="cls_count">Classes</th>
+          <th data-col="func_count">Functions</th>
+          <th data-col="imp_count">Imports</th>
+          <th data-col="cnst_count">Constants</th>
+          <th data-col="total">Total</th>
+          <th>Mix</th>
+        </tr></thead>
+        <tbody id="api-body"></tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
-<div class="section-title">top modules by size</div>
-<div class="card">
-    
-<!-- top modules table -->
+<div id="tip"><b></b><span></span></div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>module</th>
-                <th>classes</th>
-                <th>functions</th>
-                <th>globals</th>
-                <th>imports</th>
-                <th>total</th>
-            </tr>
-        </thead>
-        <tbody>
-    {% for module in top_modules %}
-    <tr>
-        <td>{{ module.name }}</td>
-        <td>{{ "{:,}".format(module.classes) }}</td>
-        <td>{{ "{:,}".format(module.functions) }}</td>
-        <td>{{ "{:,}".format(module.globals) }}</td>
-        <td>{{ "{:,}".format(module.imports) }}</td>
-        <td>{{ "{:,}".format(module.total) }}</td>
-    </tr>
-    {% endfor %}
-</tbody>
-    </table>
-</div>
-</div>
+<script>{{ d3js_source }}</script>
+<script>
+const PKG           = {{ pkg_name           | tojson }};
+const STATS         = {{ stats              | tojson }};
+const TOP_FANOUT    = {{ top_fanout         | tojson }};
+const TOP_FANIN     = {{ top_fanin          | tojson }};
+const TOP_DECORATOR = {{ top_decorator      | tojson }};
+const TOP_BASE      = {{ top_base           | tojson }};
+const IMPORT_TYPES  = {{ import_types       | tojson }};
+const EXT_IMPORTS   = {{ external_imports   | tojson }};
+const INT_IMPORTS   = {{ internal_imports   | tojson }};
+const BASE_CLASSES  = {{ base_classes       | tojson }};
+const DECORATORS    = {{ decorators         | tojson }};
+const METH_DECORATORS    = {{ top_method_decorators         | tojson }};
+const CLASS_TRAITS  = {{ class_traits       | tojson }};
+const FUNC_TRAITS   = {{ func_traits        | tojson }};
+const METH_TRAITS   = {{ method_traits       | tojson }};
+const HUBS          = {{ hubs               | tojson }};
+const API_SURFACE   = {{ api_surface        | tojson }};
+const INH           = {{ inheritance_records | tojson }};
+const METACLASS     = {{ metaclass_records | tojson  }};
 
-<div class="footer">
-    pypkgview · built by a curious developer for curious developers
-</div>
+const fmt   = n => Number(n||0).toLocaleString();
+const short = (s,n=32) => s.length<=n ? s : ('…'+s.slice(-(n-1)));
+const tip   = document.getElementById('tip');
+const showTip=(e,name,val)=>{tip.style.display='block';tip.querySelector('b').textContent=name;tip.querySelector('span').textContent=val;moveTip(e);};
+const moveTip=e=>{tip.style.left=(e.clientX+14)+'px';tip.style.top=(e.clientY-10)+'px';};
+const hideTip=()=>{tip.style.display='none';};
+const size=id=>{const el=document.getElementById(id);return{w:el.clientWidth,h:el.clientHeight};};
+const PKG_C={fastapi:'#7c6af7',pydantic:'#f7a04a',starlette:'#3ef5a0',enum:'#f74a7c',typing:'#4ab8f7',abc:'#f7e24a',google:'#56cfb2',proto:'#facc15',grpc:'#4ea8de',builtins:'#ff4d6d'};
+const nColor=n=>PKG_C[n.split('.')[0]]||'#9898be';
 
-    <script>
-        new Chart("chart-external-imports", {
-            type: "bar",
-            data: {
-                labels: {{ top_external_imports | map(attribute = "name") | list | tojson }},
-            datasets: [{
-                data: {{ top_external_imports | map(attribute = "count") | list | tojson }},
-            backgroundColor: "#56cfb2",
-            borderRadius: 4,
-        }]
-    },
-            options: {
-            indexAxis: "y",
-            plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                x: {
-                    ticks: { color: "#5a6080", font: { size: 10 } },
-                    grid: { color: "#1c1c30" }
-                },
-                y: {
-                    ticks: { color: "#5a6080", font: { size: 10 } },
-                    grid: { color: "#1c1c30" }
-                }
-            }
-        }
-});
-new Chart("chart-internal-imports", {
-    type: "bar",
-    data: {
-        labels: {{ top_internal_imports | map(attribute="name") | list | tojson }},
-        datasets: [{
-            data:  {{ top_internal_imports | map(attribute="count") | list | tojson }},
-            backgroundColor: "#4ea8de",
-            borderRadius: 4,
-        }]
-    },
-    options: {
-        indexAxis: "y",
-        plugins: {
-            legend: { display: false }
-        },
-        scales: {
-            x: {
-                ticks: { color: "#5a6080", font: { size: 10 } },
-                grid:  { color: "#1c1c30" }
-            },
-            y: {
-                ticks: { color: "#5a6080", font: { size: 10 } },
-                grid:  { color: "#1c1c30" }
-            }
-        }
+function hbar(id,data,color,max=15){
+  const items=data.slice(0,max);
+  const{w,h}=size(id);
+  const m={t:4,r:55,b:10,l:195};
+  const iW=w-m.l-m.r,iH=h-m.t-m.b;
+  const x=d3.scaleLinear().domain([0,d3.max(items,d=>d.count)]).range([0,iW]);
+  const y=d3.scaleBand().domain(items.map(d=>d.name)).range([0,iH]).padding(.28);
+  const svg=d3.select(`#${id}`).append('svg').attr('width',w).attr('height',h);
+  const g=svg.append('g').attr('transform',`translate(${m.l},${m.t})`);
+  g.append('g').call(d3.axisBottom(x).ticks(5).tickSize(iH).tickFormat(''))
+   .call(gg=>gg.select('.domain').remove())
+   .selectAll('.tick line').attr('stroke','#1c1c30').attr('stroke-dasharray','3,3').attr('y2',iH);
+  g.selectAll('rect.b').data(items).join('rect').attr('class','b')
+   .attr('x',0).attr('y',d=>y(d.name)).attr('height',y.bandwidth())
+   .attr('fill',color).attr('fill-opacity',.75).attr('rx',2).attr('width',0)
+   .on('mouseover',(e,d)=>showTip(e,d.name,fmt(d.count))).on('mousemove',moveTip).on('mouseout',hideTip)
+   .transition().duration(450).ease(d3.easeCubicOut).attr('width',d=>x(d.count));
+  g.append('g').call(d3.axisLeft(y).tickSize(0).tickFormat(d=>short(d,26)))
+   .call(gg=>gg.select('.domain').remove())
+   .selectAll('text').attr('fill','#5a6080').attr('font-size','9px').attr('font-family','JetBrains Mono,monospace').attr('dx',-5);
+  g.selectAll('text.v').data(items).join('text').attr('class','v')
+   .attr('x',d=>x(d.count)+4).attr('y',d=>y(d.name)+y.bandwidth()/2+3)
+   .attr('fill',color).attr('font-size','9px').attr('font-family','JetBrains Mono,monospace')
+   .attr('fill-opacity',0).text(d=>fmt(d.count))
+   .transition().delay(380).duration(150).attr('fill-opacity',.85);
+}
+
+function traitBar(id,data,color){
+  const{w,h}=size(id);
+  const m={t:4,r:50,b:10,l:130};
+  const iW=w-m.l-m.r,iH=h-m.t-m.b;
+  const x=d3.scaleLinear().domain([0,d3.max(data,d=>d.value)||1]).range([0,iW]);
+  const y=d3.scaleBand().domain(data.map(d=>d.name)).range([0,iH]).padding(.32);
+  const svg=d3.select(`#${id}`).append('svg').attr('width',w).attr('height',h);
+  const g=svg.append('g').attr('transform',`translate(${m.l},${m.t})`);
+  g.selectAll('rect.tr').data(data).join('rect').attr('class','tr')
+   .attr('x',0).attr('y',d=>y(d.name)).attr('width',iW).attr('height',y.bandwidth()).attr('fill','#1c1c30').attr('rx',2);
+  g.selectAll('rect.tf').data(data).join('rect').attr('class','tf')
+   .attr('x',0).attr('y',d=>y(d.name)).attr('height',y.bandwidth())
+   .attr('fill',color).attr('fill-opacity',.75).attr('rx',2).attr('width',0)
+   .on('mouseover',(e,d)=>showTip(e,d.name,fmt(d.value))).on('mousemove',moveTip).on('mouseout',hideTip)
+   .transition().duration(450).ease(d3.easeCubicOut).attr('width',d=>x(d.value));
+  g.append('g').call(d3.axisLeft(y).tickSize(0))
+   .call(gg=>gg.select('.domain').remove())
+   .selectAll('text').attr('fill','#5a6080').attr('font-size','9px').attr('font-family','JetBrains Mono,monospace');
+  g.selectAll('text.tv').data(data).join('text').attr('class','tv')
+   .attr('x',d=>x(d.value)+4).attr('y',d=>y(d.name)+y.bandwidth()/2+3)
+   .attr('fill',color).attr('font-size','9px').attr('font-family','JetBrains Mono,monospace')
+   .attr('opacity',0).text(d=>fmt(d.value)).transition().delay(380).attr('opacity',.85);
+}
+
+function donut(id,data){
+  const{w,h}=size(id);
+  const r=Math.min(w,h)/2*.82;
+  const total=d3.sum(data,d=>d.value);
+  const svg=d3.select(`#${id}`).append('svg').attr('width',w).attr('height',h);
+  const g=svg.append('g').attr('transform',`translate(${w/2},${h/2})`);
+  const pie=d3.pie().value(d=>d.value).sort(null);
+  const arc=d3.arc().innerRadius(r*.6).outerRadius(r);
+  const arcH=d3.arc().innerRadius(r*.6).outerRadius(r*1.04);
+  g.selectAll('path').data(pie(data)).join('path')
+   .attr('d',arc).attr('fill',d=>d.data.color).attr('stroke','#050508').attr('stroke-width',2)
+   .on('mouseover',function(e,d){d3.select(this).transition().duration(100).attr('d',arcH);showTip(e,d.data.label,`${fmt(d.data.value)} · ${Math.round(d.data.value/total*100)}%`);})
+   .on('mousemove',moveTip)
+   .on('mouseout',function(){d3.select(this).transition().duration(100).attr('d',arc);hideTip();});
+  g.append('text').attr('text-anchor','middle').attr('dy','-.2em')
+   .attr('fill','#d8dff0').attr('font-size',Math.min(16,r*.24)+'px').attr('font-family','JetBrains Mono,monospace').attr('font-weight','600').text(fmt(total));
+  g.append('text').attr('text-anchor','middle').attr('dy','1.1em')
+   .attr('fill','#5a6080').attr('font-size','8px').attr('font-family','JetBrains Mono,monospace').text('TOTAL');
+}
+
+function scatter(id,data){
+  const{w,h}=size(id);
+  const m={t:18,r:18,b:42,l:58};
+  const iW=w-m.l-m.r,iH=h-m.t-m.b;
+  const x=d3.scaleLinear().domain([0,d3.max(data,d=>d.fanout)*1.12]).range([0,iW]);
+  const y=d3.scaleLinear().domain([0,d3.max(data,d=>d.fanin)*1.12]).range([iH,0]);
+  const svg=d3.select(`#${id}`).append('svg').attr('width',w).attr('height',h);
+  const g=svg.append('g').attr('transform',`translate(${m.l},${m.t})`);
+  g.append('g').call(d3.axisLeft(y).ticks(5).tickSize(-iW).tickFormat(''))
+   .call(gg=>gg.select('.domain').remove()).selectAll('.tick line').attr('stroke','#1c1c30').attr('stroke-dasharray','3,3');
+  g.append('g').attr('transform',`translate(0,${iH})`).call(d3.axisBottom(x).ticks(5).tickSize(-iH).tickFormat(''))
+   .call(gg=>gg.select('.domain').remove()).selectAll('.tick line').attr('stroke','#1c1c30').attr('stroke-dasharray','3,3');
+  g.append('g').attr('transform',`translate(0,${iH})`).call(d3.axisBottom(x).ticks(5))
+   .call(gg=>gg.select('.domain').attr('stroke','#1c1c30')).selectAll('text').attr('fill','#5a6080').attr('font-size','9px').attr('font-family','JetBrains Mono,monospace');
+  g.append('g').call(d3.axisLeft(y).ticks(5))
+   .call(gg=>gg.select('.domain').attr('stroke','#1c1c30')).selectAll('text').attr('fill','#5a6080').attr('font-size','9px').attr('font-family','JetBrains Mono,monospace');
+  g.append('text').attr('x',iW/2).attr('y',iH+34).attr('text-anchor','middle').attr('fill','#5a6080').attr('font-size','8px').attr('font-family','JetBrains Mono,monospace').text('fan-out →');
+  g.append('text').attr('transform','rotate(-90)').attr('x',-iH/2).attr('y',-46).attr('text-anchor','middle').attr('fill','#5a6080').attr('font-size','8px').attr('font-family','JetBrains Mono,monospace').text('← fan-in');
+  g.selectAll('circle').data(data).join('circle')
+   .attr('cx',d=>x(d.fanout)).attr('cy',d=>y(d.fanin)).attr('r',5)
+   .attr('fill',d=>d.fanin>15?'#56cfb2':d.fanout>20?'#ff4d6d':'#7c6af7')
+   .attr('fill-opacity',.8).attr('stroke','#050508').attr('stroke-width',1)
+   .on('mouseover',(e,d)=>showTip(e,short(d.module,44),`fan-in: ${fmt(d.fanin)} · fan-out: ${fmt(d.fanout)}`))
+   .on('mousemove',moveTip).on('mouseout',hideTip);
+  const lg=[['#56cfb2','Core (high fan-in)'],['#ff4d6d','High coupling (high fan-out)'],['#7c6af7','Balanced']];
+  const lG=svg.append('g').attr('transform',`translate(${m.l+8},${m.t+8})`);
+  lg.forEach(([c,l],i)=>{
+    lG.append('circle').attr('cx',0).attr('cy',i*15).attr('r',4).attr('fill',c).attr('fill-opacity',.8);
+    lG.append('text').attr('x',10).attr('y',i*15+4).attr('fill','#5a6080').attr('font-size','8px').attr('font-family','JetBrains Mono,monospace').text(l);
+  });
+}
+
+function buildHierarchy(records){
+  const seen=new Set(),edges=[];
+  for(const[,,path] of records){
+    const parts=path.split('->').map(s=>s.trim());
+    for(let i=0;i<parts.length-1;i++){
+      const k=parts[i]+'|||'+parts[i+1];
+      if(!seen.has(k)){seen.add(k);edges.push([parts[i],parts[i+1]]);}
     }
-});
+  }
+  const cm=new Map(),hp=new Set(),all=new Set();
+  for(const[s,t] of edges){all.add(s);all.add(t);hp.add(t);if(!cm.has(s))cm.set(s,[]);cm.get(s).push(t);}
+  const placed=new Set();
+  function mk(id){
+    if(placed.has(id)) return{id,name:id.split('.').pop(),fullName:id,isDup:true,children:[]};
+    placed.add(id);
+    return{id,name:id.split('.').pop(),fullName:id,children:(cm.get(id)||[]).map(mk)};
+  }
+  const roots=[...all].filter(n=>!hp.has(n)).map(mk);
+  if(!roots.length) return null;
+  if(roots.length===1) return roots[0];
+  return{id:'__vr__',name:'',fullName:'',isVirtual:true,children:roots};
+}
 
-new Chart("chart-base-classes", {
-    type: "bar",
-    data: {
-        labels: {{ top_bases | map(attribute="name") | list | tojson }},
-        datasets: [{
-            data:  {{ top_bases | map(attribute="count") | list | tojson }},
-            backgroundColor: "#ff4d6d",
-            borderRadius: 4,
-        }]
-    },
-    options: {
-        indexAxis: "y",
-        plugins: { legend: { display: false } },
-        scales: {
-            x: {
-                ticks: { color: "#5a6080", font: { size: 10 } },
-                grid:  { color: "#1c1c30" }
-            },
-            y: {
-                ticks: { color: "#5a6080", font: { size: 10 } },
-                grid:  { color: "#1c1c30" }
-            }
-        }
+function drawTree(records){
+  const id='ch-inh';
+  const{w,h}=size(id);
+  const hdata=buildHierarchy(records);
+  if(!hdata){d3.select(`#${id}`).style('display','flex').style('align-items','center').style('justify-content','center').style('color','#5a6080').text('No inheritance data');return;}
+  const svg=d3.select(`#${id}`).append('svg').attr('width',w).attr('height',h);
+  const g=svg.append('g');
+  const zoom=d3.zoom().scaleExtent([.05,5]).on('zoom',e=>g.attr('transform',e.transform));
+  svg.call(zoom).on('dblclick.zoom',null);
+  const root=d3.hierarchy(hdata);
+  d3.tree().nodeSize([130,85])(root);
+  const rN=root.descendants().filter(d=>!d.data.isVirtual);
+  const rL=root.links().filter(l=>!l.source.data.isVirtual);
+  const lSel=g.append('g').selectAll('path').data(rL).join('path')
+    .attr('class','inh-link').attr('d',d3.linkVertical().x(d=>d.x).y(d=>d.y))
+    .attr('stroke',l=>nColor(l.source.data.fullName));
+  const nEl=g.append('g').selectAll('g').data(rN).join('g')
+    .attr('class','inh-node').attr('transform',d=>`translate(${d.x},${d.y})`);
+  nEl.append('circle')
+    .attr('r',d=>d.data.isDup?4:d.children?.length?8:6)
+    .attr('fill',d=>nColor(d.data.fullName)).attr('fill-opacity',d=>d.data.isDup?.3:.8)
+    .attr('stroke',d=>nColor(d.data.fullName)).attr('stroke-width',1.5).attr('stroke-opacity',.5)
+    .on('mouseover',(e,d)=>{if(!d.data.isVirtual)showTip(e,d.data.name,d.data.fullName);})
+    .on('mousemove',moveTip).on('mouseout',hideTip);
+  nEl.append('text').attr('y',-13).attr('text-anchor','middle')
+    .attr('fill',d=>nColor(d.data.fullName)).attr('fill-opacity',.9)
+    .attr('font-size','10px').attr('font-family','JetBrains Mono,monospace').text(d=>d.data.name);
+  nEl.append('text').attr('y',20).attr('text-anchor','middle')
+    .attr('fill','#2a2a44').attr('font-size','8px').attr('font-family','JetBrains Mono,monospace')
+    .text(d=>{const p=d.data.fullName.split('.');return p.length>1?p.slice(0,-1).join('.'):'';});
+  const xs=rN.map(d=>d.x),ys=rN.map(d=>d.y);
+  svg.call(zoom.transform,d3.zoomIdentity.translate(w/2-(Math.min(...xs)+Math.max(...xs))/2,h/2-(Math.min(...ys)+Math.max(...ys))/2));
+  document.getElementById('inh-search').addEventListener('input',function(){
+    const q=this.value.trim().toLowerCase();
+    if(!q){nEl.classed('dim',false);lSel.classed('dim',false);document.getElementById('inh-hint').textContent='type to highlight · hover for details';return;}
+    const mIds=new Set(rN.filter(d=>d.data.fullName.toLowerCase().includes(q)).map(d=>d.data.fullName));
+    nEl.classed('dim',d=>!mIds.has(d.data.fullName));
+    lSel.classed('dim',l=>!mIds.has(l.source.data.fullName)&&!mIds.has(l.target.data.fullName));
+    document.getElementById('inh-hint').textContent=`${mIds.size} class${mIds.size!==1?'es':''} matched`;
+  });
+}
+
+function drawMetaTree(paths){
+  // paths = array of strings like "MetaClass->mod.Class->mod.Child"
+  const id='ch-meta';
+  const{w,h}=size(id);
+
+  // build edges from path strings
+  const seen=new Set(),edges=[];
+  for(const path of paths){
+    const parts=path.split('->').map(s=>s.trim());
+    for(let i=0;i<parts.length-1;i++){
+      const k=parts[i]+'|||'+parts[i+1];
+      if(!seen.has(k)){seen.add(k);edges.push([parts[i],parts[i+1]]);}
     }
+  }
+  if(!edges.length){
+    d3.select(`#${id}`).style('display','flex').style('align-items','center').style('justify-content','center').style('color','#5a6080').text('No metaclass data');
+    return;
+  }
+
+  const cm=new Map(),hp=new Set(),all=new Set();
+  for(const[s,t] of edges){all.add(s);all.add(t);hp.add(t);if(!cm.has(s))cm.set(s,[]);cm.get(s).push(t);}
+  const placed=new Set();
+  function mk(id){
+    if(placed.has(id)) return{id,name:id.split('.').pop(),fullName:id,isDup:true,children:[]};
+    placed.add(id);
+    return{id,name:id.split('.').pop(),fullName:id,children:(cm.get(id)||[]).map(mk)};
+  }
+  const roots=[...all].filter(n=>!hp.has(n)).map(mk);
+  const hdata=roots.length===1?roots[0]:{id:'__vr__',name:'',fullName:'',isVirtual:true,children:roots};
+
+  const svg=d3.select(`#${id}`).append('svg').attr('width',w).attr('height',h);
+  const g=svg.append('g');
+  const zoom=d3.zoom().scaleExtent([.05,5]).on('zoom',e=>g.attr('transform',e.transform));
+  svg.call(zoom).on('dblclick.zoom',null);
+  const root=d3.hierarchy(hdata);
+  d3.tree().nodeSize([130,85])(root);
+  const rN=root.descendants().filter(d=>!d.data.isVirtual);
+  const rL=root.links().filter(l=>!l.source.data.isVirtual);
+
+  const lSel=g.append('g').selectAll('path').data(rL).join('path')
+    .attr('class','inh-link').attr('d',d3.linkVertical().x(d=>d.x).y(d=>d.y))
+    .attr('stroke',l=>nColor(l.source.data.fullName));
+
+  const nEl=g.append('g').selectAll('g').data(rN).join('g')
+    .attr('class','inh-node').attr('transform',d=>`translate(${d.x},${d.y})`);
+
+  nEl.append('circle')
+    .attr('r',d=>d.data.isDup?4:d.children?.length?9:6)
+    .attr('fill',d=>d.depth===0||(!d.parent||d.parent.data.isVirtual)?'#facc15':nColor(d.data.fullName))
+    .attr('fill-opacity',d=>d.data.isDup?.3:.85)
+    .attr('stroke',d=>d.depth===0||(!d.parent||d.parent.data.isVirtual)?'#facc15':nColor(d.data.fullName))
+    .attr('stroke-width',1.5).attr('stroke-opacity',.5)
+    .on('mouseover',(e,d)=>{if(!d.data.isVirtual)showTip(e,d.data.name,d.data.fullName);})
+    .on('mousemove',moveTip).on('mouseout',hideTip);
+
+  nEl.append('text').attr('y',-13).attr('text-anchor','middle')
+    .attr('fill',d=>d.depth===0||(!d.parent||d.parent.data.isVirtual)?'#facc15':nColor(d.data.fullName))
+    .attr('fill-opacity',.9).attr('font-size','10px').attr('font-family','JetBrains Mono,monospace')
+    .text(d=>d.data.name);
+
+  nEl.append('text').attr('y',20).attr('text-anchor','middle')
+    .attr('fill','#2a2a44').attr('font-size','8px').attr('font-family','JetBrains Mono,monospace')
+    .text(d=>{const p=d.data.fullName.split('.');return p.length>1?p.slice(0,-1).join('.'):'';});
+
+  const xs=rN.map(d=>d.x),ys=rN.map(d=>d.y);
+  svg.call(zoom.transform,d3.zoomIdentity.translate(w/2-(Math.min(...xs)+Math.max(...xs))/2,h/2-(Math.min(...ys)+Math.max(...ys))/2));
+
+  document.getElementById('meta-search').addEventListener('input',function(){
+    const q=this.value.trim().toLowerCase();
+    if(!q){nEl.classed('dim',false);lSel.classed('dim',false);document.getElementById('meta-hint').textContent='type to highlight · hover for details';return;}
+    const mIds=new Set(rN.filter(d=>d.data.fullName.toLowerCase().includes(q)).map(d=>d.data.fullName));
+    nEl.classed('dim',d=>!mIds.has(d.data.fullName));
+    lSel.classed('dim',l=>!mIds.has(l.source.data.fullName)&&!mIds.has(l.target.data.fullName));
+    document.getElementById('meta-hint').textContent=`${mIds.size} class${mIds.size!==1?'es':''} matched`;
+  });
+}
+  
+
+
+function buildTable(data){
+  const tbody=document.getElementById('api-body');
+  const render=rows=>{
+    tbody.innerHTML='';
+    rows.forEach(r=>{
+      const tr=document.createElement('tr');
+      const pct=v=>Math.round((v||0)/Math.max(r.total,1)*100);
+      tr.innerHTML=`<td title="${r.name}">${short(r.name,42)}</td><td class="tn">${r.cls_count}</td><td class="tn">${r.func_count}</td><td class="tn">${r.imp_count}</td><td class="tn">${r.cnst_count}</td><td class="tn" style="color:var(--accent)">${r.total}</td><td><div class="mbt"><div class="mbf" style="width:${pct((r.cls_count||0)+(r.func_count||0))}%;background:var(--accent)"></div></div></td>`;
+      tbody.appendChild(tr);
+    });
+  };
+  let sc='total',sd=-1;
+  render([...data].sort((a,b)=>b.total-a.total));
+  document.querySelectorAll('#api-tbl thead th[data-col]').forEach(th=>{
+    th.addEventListener('click',()=>{
+      const col=th.dataset.col;
+      if(col===sc)sd*=-1;else{sc=col;sd=-1;}
+      document.querySelectorAll('#api-tbl thead th').forEach(t=>t.classList.remove('asc','desc'));
+      th.classList.add(sd===1?'asc':'desc');
+      render([...data].sort((a,b)=>sd*(col==='name'?a.name.localeCompare(b.name):(a[col]||0)-(b[col]||0))));
+    });
+  });
+  document.querySelector('#api-tbl thead th[data-col="total"]').classList.add('desc');
+}
+
+const done=new Set();
+document.querySelectorAll('.nav-item').forEach(item=>{
+  item.addEventListener('click',()=>{
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    item.classList.add('active');
+    const pid='panel-'+item.dataset.p;
+    document.getElementById(pid).classList.add('active');
+    if(!done.has(pid)){done.add(pid);setTimeout(()=>init(item.dataset.p),30);}
+  });
 });
 
-new Chart("chart-decorators", {
-    type: "bar",
-    data: {
-        labels: {{ top_decorators | map(attribute="name") | list | tojson }},
-        datasets: [{
-            data:  {{ top_decorators | map(attribute="count") | list | tojson }},
-            backgroundColor: "#facc15",
-            borderRadius: 4,
-        }]
-    },
-    options: {
-        indexAxis: "y",
-        plugins: { legend: { display: false } },
-        scales: {
-            x: {
-                ticks: { color: "#5a6080", font: { size: 10 } },
-                grid:  { color: "#1c1c30" }
-            },
-            y: {
-                ticks: { color: "#5a6080", font: { size: 10 } },
-                grid:  { color: "#1c1c30" }
-            }
-        }
-    }
-});
-new Chart("chart-donut", {
-    type: "doughnut",
-    data: {
-        labels: ["stdlib", "internal", "third party"],
-        datasets: [{
-            data: [
-                {{ import_profile.stdlib }},
-                {{ import_profile.internal }},
-                {{ import_profile.third_party }},
-            ],
-            backgroundColor: [
-                "#56cfb2",
-                "#4ea8de",
-                "#facc15",
-            ],
-            borderWidth: 0,
-            hoverOffset: 8,
-        }]
-    },
-    options: {
-        cutout: "65%",
-        plugins: {
-            legend: { display: false },
-            tooltip: {
-                callbacks: {
-                    label: function(context) {
-                        const total = context.dataset.data
-                            .reduce((a, b) => a + b, 0);
-                        const pct = Math.round(
-                            context.parsed / total * 100
-                        );
-                        return ` ${context.label}: ${context.parsed.toLocaleString()} (${pct}%)`;
-                    }
-                }
-            }
-        }
-    }
-});
+function init(p){
+  if(p==='overview'){
+    document.getElementById('brand-name').textContent=PKG;
+    document.getElementById('brand-icon').textContent=PKG[0].toUpperCase();
+    document.getElementById('sf-pkg').textContent=PKG;
+    ['mod','cls','fn','mth','imp'].forEach((k,i)=>{
+      const keys=['modules','classes','functions','methods','imports'];
+      const v=fmt(STATS[keys[i]]);
+      document.getElementById('tp-'+k).textContent=v;
+      document.getElementById('sv-'+k).textContent=v;
+    });
+    document.getElementById('ins-fo-n').textContent=short(TOP_FANOUT.module,34);
+    document.getElementById('ins-fo-d').textContent=`imports ${fmt(TOP_FANOUT.value)} modules`;
+    document.getElementById('ins-fi-n').textContent=short(TOP_FANIN.module,34);
+    document.getElementById('ins-fi-d').textContent=`imported by ${fmt(TOP_FANIN.value)} modules`;
+    document.getElementById('ins-dc-n').textContent=short(TOP_DECORATOR.name,34);
+    document.getElementById('ins-dc-d').textContent=`used ${fmt(TOP_DECORATOR.count)} times`;
+    document.getElementById('ins-bc-n').textContent=short(TOP_BASE.name,34);
+    document.getElementById('ins-bc-d').textContent=`inherited by ${fmt(TOP_BASE.count)} classes`;
+    const dd=[
+      {label:'Internal',    value:IMPORT_TYPES.internal,    color:'#4ea8de'},
+      {label:'Third-party', value:IMPORT_TYPES.third_party, color:'#facc15'},
+      {label:'Stdlib',      value:IMPORT_TYPES.stdlib,      color:'#56cfb2'},
+    ];
+    donut('ch-donut',dd);
+    const total=dd.reduce((s,d)=>s+d.value,0);
+    const legEl=document.getElementById('donut-leg');
+    dd.forEach(d=>{legEl.innerHTML+=`<div class="dl-i"><div class="dl-d" style="background:${d.color}"></div><div><div class="dl-n">${d.label}</div></div><div class="dl-c">${Math.round(d.value/total*100)}%</div></div>`;});
+    const ct=Object.entries(CLASS_TRAITS).map(([k,v])=>({name:k.replace(/_/g,' '),value:v})).sort((a,b)=>b.value-a.value);
+    traitBar('ch-cls-ov',ct,'#ff4d6d');
+  }
+  if(p==='imports'){hbar('ch-ext',EXT_IMPORTS,'#56cfb2',15);hbar('ch-int',INT_IMPORTS,'#4ea8de',15);}
+  if(p==='hubs'){
+    scatter('ch-scatter',HUBS);
+    hbar('ch-fanin',[...HUBS].sort((a,b)=>b.fanin-a.fanin).slice(0,12).map(d=>({name:d.module,count:d.fanin})),'#56cfb2',12);
+    hbar('ch-fanout',[...HUBS].sort((a,b)=>b.fanout-a.fanout).slice(0,12).map(d=>({name:d.module,count:d.fanout})),'#ff4d6d',12);
+  }
+  if(p==='inheritance') drawTree(INH);
+  if(p==='metaclass') drawMetaTree(METACLASS)
+  if(p==='classes'){
+    const ct=Object.entries(CLASS_TRAITS).map(([k,v])=>({name:k.replace(/_/g,' '),value:v})).sort((a,b)=>b.value-a.value);
+    traitBar('ch-cls-traits',ct,'#ff4d6d');
+    hbar('ch-bases',BASE_CLASSES,'#7c6af7',15);
+  }
+  if(p==='functions'){
+    const ft=Object.entries(FUNC_TRAITS).map(([k,v])=>({name:k.replace('_count','').replace(/_/g,' '),value:v||0})).filter(d=>d.value>0).sort((a,b)=>b.value-a.value);
+    traitBar('ch-fn-traits',ft.length?ft:[{name:'no data',value:0}],'#4ea8de');
+    hbar('ch-decs',DECORATORS,'#facc15',15);
+  }
+  if(p==='methods'){
+    const ft=Object.entries(METH_TRAITS).map(([k,v])=>({name:k.replace('_count','').replace(/_/g,' '),value:v||0})).filter(d=>d.value>0).sort((a,b)=>b.value-a.value);
+    traitBar('ch-meth-traits',ft.length?ft:[{name:'no data',value:0}],'#4ea8de');
+    hbar('ch-meth-decs',METH_DECORATORS,'#facc15',15);
+  }
+  if(p==='api') buildTable(API_SURFACE);
+}
 
-new Chart("chart-class-radar", {
-    type: "bar",
-    data: {
-        labels: [
-            "decorated",
-            "contextmanager",
-            "nested",
-            "has metaclass",
-            "iterable",
-            "iterator",
-            "descriptor"
-        ],
-        datasets: [{
-            data: [
-                {{ class_properties.decorated }},
-                {{ class_properties.contextmanager }},
-                {{ class_properties.nested }},
-                {{ class_properties.has_metaclass }},
-                {{ class_properties.iterable }},
-                {{ class_properties.iterator }},
-                {{ class_properties.descriptor }},
-            ],
-            backgroundColor: "#ff4d6d",
-            borderRadius: 4,
-            barThickness: 4,  
-        }]
-    },
-    options: {
-        indexAxis: "y",
-        plugins: { legend: { display: false } },
-        scales: {
-            x: {
-                ticks: { color: "#5a6080", font: { size: 10 } },
-                grid:  { color: "#1c1c30" }
-            },
-            y: {
-                ticks: { color: "#5a6080", font: { size: 10 } },
-                grid:  { color: "#1c1c30" }
-            }
-        }
-    }
-});
-
-new Chart("chart-func-radar", {
-    type: "bar",
-    data: {
-        labels: [
-            "decorated",
-            "generator",
-            "async",
-            "gen delegation"
-        ],
-        datasets: [{
-            data: [
-                {{ func_properties.decorated }},
-                {{ func_properties.generator }},
-                {{ func_properties.async_functions }},
-                {{ func_properties.gen_delegation }},
-            ],
-            backgroundColor: "#4ea8de",
-            borderRadius: 4,
-            barThickness: 4,  
-        }]
-    },
-    options: {
-        indexAxis: "y",
-        plugins: { legend: { display: false } },
-        scales: {
-            x: {
-                ticks: { color: "#5a6080", font: { size: 10 } },
-                grid:  { color: "#1c1c30" }
-            },
-            y: {
-                ticks: { color: "#5a6080", font: { size: 10 } },
-                grid:  { color: "#1c1c30" }
-            }
-        }
-    }
-});
-
-
-    </script>
-
-
+done.add('panel-overview');
+setTimeout(()=>init('overview'),60);
+</script>
 </body>
-
 </html>

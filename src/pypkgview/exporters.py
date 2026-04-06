@@ -266,6 +266,81 @@ class SqliteExporter:
                 for src, names in imp_dct.items()
                 for name in names
             ])
+
+        cursor.executescript("""DROP VIEW IF EXISTS api_surface;
+        create view api_surface as
+        with cls_name AS ( 
+            select m.id as mid, count(c.id) as cls_count from classes c
+            join modules m on m.id = c.module_id 
+            group by mid 
+        ),
+        func_name AS (
+            select m.id as mid, count(f.id) as func_count from functions f 
+            join modules m on m.id = f.module_id 
+            group by mid 
+        ), imp_name AS (
+            select m.id as mid, count(imp.id) as imp_count from imports imp 
+            join modules m on m.id = imp.module_id 
+            group by mid 
+        ), cnst_name AS (
+            select m.id as mid, count(cnst.id) as cnst_count from constants cnst
+            join modules m on m.id = cnst.module_id 
+            group by mid 
+        ), meth_name AS (
+            select m.id as mid, count(md.id) as meth_count from methods md
+            join classes c on c.id = md.class_id
+            join modules m on m.id = c.module_id 
+            group by mid 
+        )	
+
+        select m.name, 
+            coalesce(cls_count,0) as cls_count,
+            coalesce(meth_count,0) as meth_count,
+            coalesce(func_count,0) as func_count, 
+            coalesce(imp_count,0) as imp_count, 
+            coalesce(cnst_count,0) as cnst_count, 
+            coalesce(cls_count,0) + coalesce(meth_count,0) + coalesce(func_count,0) + coalesce(imp_count,0) + coalesce(cnst_count,0) as total 
+        from modules m 
+        left join cls_name on m.id = cls_name.mid 
+        left join func_name on m.id = func_name.mid 
+        left join imp_name on m.id = imp_name.mid 
+        left join cnst_name on m.id = cnst_name.mid
+        left join meth_name on m.id = meth_name.mid;""")
+        
+        
+        cursor.executescript("""DROP VIEW IF EXISTS inheritance;
+        create view inheritance AS 
+        with class_cte AS (
+            select 
+                c.id, m.name||'.'||c.name as name 
+            from classes c 
+            join modules m 
+                on m.id = c.module_id
+        ),inht AS (
+            select b.name as ancestor,
+                c.name as child,
+                b.name || '->' ||c.name as path,
+                1 as lvl
+
+            from bases b 
+            join class_cte c on b.class_id = c.id
+            
+            UNION ALL
+            select 
+                i.ancestor,
+                c.name as child, 
+                path || '->' || c.name as path, 
+                1+lvl as lvl
+            
+            from bases b 
+            join inht i 
+                on b.name = i.child 
+            join class_cte c 
+                on b.class_id = c.id
+        )
+
+        select ancestor,child, path, lvl from inht
+        order by lvl desc;""")
         cursor.close()
         conn.commit()
         conn.close()

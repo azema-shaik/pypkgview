@@ -3,18 +3,17 @@ import json
 import logging
 import sqlite3
 import pathlib 
+import pprint
 from jinja2 import Environment, FileSystemLoader 
 
 
 logger = logging.getLogger(__name__)
 
-def classify_imports(package_name,imports):
+def classify_imports(package_name,cursor):
     profile = {"stdlib": 0,"internal": 0,"third_party":0}
     stdlib    = sys.stdlib_module_names 
 
-    for imp in imports:
-        name = imp["name"]
-        count = imp["count"]
+    for name, count in cursor.fetchall():
 
         if name == package_name:
             profile["internal"] += count 
@@ -24,66 +23,10 @@ def classify_imports(package_name,imports):
         else:
             profile["third_party"] += count 
 
+    
+    logger.debug(f'{profile = }')
     return profile 
         
-
-
-def get_insights(package_name:str,totals: dict,import_details: list[dict[str,str]]) -> list[dict]:
-    insights = []
-
-    # class vs function ratio
-    classes   = totals["classes"]
-    functions = totals["functions"]
-    ratio     = classes / functions if functions > 0 else 0
-
-    if ratio > 2:
-        insights.append({
-            "title":  "OOP Heavy",
-            "detail": f"{classes:,} classes vs {functions:,} functions — "
-                      f"this package strongly favors class-based design.",
-        })
-    elif ratio < 0.5:
-        insights.append({
-            "title":  "Functional API",
-            "detail": f"{functions:,} functions vs {classes:,} classes — "
-                      f"this package is primarily a functional interface.",
-        })
-
-    import_profile = classify_imports(package_name,import_details)
-    stdlib      = import_profile["stdlib"]
-    internal    = import_profile["internal"]
-    third_party = import_profile["third_party"]
-    total       = stdlib + internal + third_party
-
-    if total > 0:
-        tp_pct  = round(third_party / total * 100)
-        int_pct = round(internal    / total * 100)
-        sb_pct  = round(stdlib      / total * 100)
-
-        if tp_pct > 40:
-            insights.append({
-                "title":  "High External Dependency",
-                "detail": f"{tp_pct}% of imports are third-party packages. "
-                          f"This package relies heavily on external libraries."
-            })
-        elif int_pct > 60:
-            insights.append({
-                "title":  "Self-Contained",
-                "detail": f"{int_pct}% of imports are internal. "
-                          f"This package mostly depends on itself."
-            })
-        elif sb_pct > 50:
-            insights.append({
-                "title":  "Stdlib Reliant",
-                "detail": f"{sb_pct}% of imports come from the standard library. "
-                          f"Minimal external dependencies."
-            })
-    
-
-    
-
-    return insights,import_profile
-
 
 
 def render_dashboard(data: dict, output_path: str):
@@ -92,23 +35,33 @@ def render_dashboard(data: dict, output_path: str):
         loader = FileSystemLoader(pathlib.Path(__file__).parent/'dashboard/templates')
     )
 
-    chartjs = pathlib.Path(pathlib.Path(__file__).parent/"dashboard/static/chart.min.js").read_text()
+    d3js = pathlib.Path(pathlib.Path(__file__).parent/"dashboard/static/d3.min.js").read_text()
     
     template = env.get_template("dashboard.html")
-    insights,import_profile = get_insights(data["package_name"],data["totals"],data["first_imp_names"])
+    
     html = template.render(
-        chartjs_source = chartjs,
-        package_name = data["package_name"],
-        totals = data["totals"],
-        insights = insights,
-        top_external_imports=data["top_external_imports"],  
-        top_internal_imports=data["top_internal_imports"],  
-        top_decorators=data["top_decorators"],
-        top_bases=data["top_bases"],
-        top_modules=data["top_modules"],
-        class_properties=data["class_properties"], 
-        import_profile = import_profile,
-    func_properties=data["func_properties"],  
+        d3js_source = d3js,
+        pkg_name = data["package_name"],
+        stats = data["stats"],
+        top_fanout = data["top_fanout"],
+        top_fanin = data["top_fanin"],
+        top_decorator = data["top_decorator"],
+        top_base = data["top_base"],
+        import_types = data["import_types"],
+        external_imports = data["external_imports"],  
+        internal_imports = data["internal_imports"],  
+        decorators = data["decorators"],
+        base_classes = data["base_classes"],
+        class_traits = data["class_traits"],
+        func_traits = data["func_traits"],
+        hubs = data["hubs"],
+        api_surface = data["api_surface"],
+        inheritance_records = data["inheritance_records"],
+        metaclass_records = data["metaclass_records"],
+        method_traits = data["method_traits"],
+        top_method_decorators = data["top_method_decorators"]
+
+ 
     )
 
     pathlib.Path(output_path).write_text(html,encoding = 'utf-8')
@@ -125,103 +78,140 @@ def extractor(package_name: str):
     print(f"Dashboard: \033[38;5;9mFetching Package Details\033[0m")
     logger.debug('Fetching Package Details')
 
-    m,c,f,cnst,imps = cursor.execute(queries["Package Composition"]).fetchone()
-    results["totals"] = {"modules":m, "classes":c,"functions":f,
+    m,c,meth,f,cnst,imps = cursor.execute(queries["stats"]).fetchone()
+    results["stats"] = {"modules":m, "classes":c,
+                         "methods": meth,"functions":f,
                          "globals": cnst,"imports":imps}
     
 
+    print(f"Dashboard: \033[38;5;9mFetching Import Details\033[0m")
+    logger.debug('Fetching Import Details')
+
+    fanout = cursor.execute(queries["fanout"],(f"{package_name}%",)).fetchone()
+    results["top_fanout"] = {"module": fanout[0], "value": fanout[1]}
+
+    fanin = cursor.execute(queries["fanin"],(f"{package_name}%",)).fetchone()
+    results["top_fanin"] = {"module": fanin[0], "value": fanin[1]}
+
     print(f"Dashboard: \033[38;5;9mFetching Class Details\033[0m")
     logger.debug('Fetching Class Details')
+
+    print(f"Dashboard: \033[38;5;9mFetching Decoratoe Details\033[0m")
+    logger.debug('Fetching Decorator Details')
+
+    decorator = cursor.execute(queries["decorator"]).fetchone()
+    results["top_decorator"] = {"name": decorator[0], "count": decorator[1]}
+
+    base = cursor.execute(queries["base"]).fetchone()
+    results["top_base"] = {"name": base[0], "count": base[1]}
+
+    print(f"Dashboard: \033[38;5;9mFetching Import Analysis\033[0m")
+    logger.debug('Fetching Import Analysis')
+    results["import_types"] = classify_imports(package_name,cursor.execute(queries["import_type"]))
     
-    dec,ctx,nes, met, itb, itr, dcpr = cursor.execute(queries["Class Details"]).fetchone()
-    results["class_properties"] = {"decorated":dec, 
-                                   "contextmanager":ctx, "nested":nes, 
-                                   "has_metaclass": met, 
-                                   "iterable": itb, "iterator": itr,
-                                   "descriptor": dcpr}
-    
-    print(f"Dashboard: \033[38;5;9mFetching Functions Details\033[0m")
-    logger.debug('Fetching Functions Details')
 
-    dec, gen, asyc, gen_deg = cursor.execute(queries["Functions Details"]).fetchone()
-    results["func_properties"] = {
-        "decorated": dec, 
-        "generator": gen,
-        "async": asyc, 
-        "generator_deleg": gen_deg
-    }
+    cursor.execute(queries["external_imports"],{'mod':f'{package_name}%'})
 
-    print("Dashboard: \033[38;5;9mFetching Top External Imports\033[0m")
-    logger.debug('Fetching Top External Imports')
-    cursor.execute(queries["Top External Imports"],{'mod':f'{package_name}%'})
-
-    results["top_external_imports"] = []
+    results["external_imports"] = []
     for fname, count in cursor:
-        results["top_external_imports"].append(
+        results["external_imports"].append(
             {"name": fname, "count": count}
         )
 
     print("Dashboard: \033[38;5;9mFetching Top Internal Imports\033[0m")
     logger.debug('Fetching Top Internal Imports')
-    cursor.execute(queries["Top Internal Imports"],{'mod':f'{package_name}%'})
+    cursor.execute(queries["internal_imports"],{'mod':f'{package_name}%'})
 
 
-    results["top_internal_imports"] = []
+    results["internal_imports"] = []
     for fname, count in cursor:
-        results["top_internal_imports"].append(
+        results["internal_imports"].append(
             {"name": fname, "count": count}
         )
 
     print("Dashboard: \033[38;5;9mFetching Top Inherited Classes\033[0m")
     logger.debug('Fetching Top Inherited Classes')
-    cursor.execute(queries["Top Inherited Classes"])
+    cursor.execute(queries["top_bases"])
 
-    results["top_bases"] = []
+    results["base_classes"] = []
     for fname, count in cursor:
-        results["top_bases"].append(
+        results["base_classes"].append(
             {"name": fname, "count": count}
         )
 
     print("Dashboard: \033[38;5;9mFetching Top Decorators\033[0m")
     logger.debug('Fetching Top Decorators')
-    cursor.execute(queries["Top Decorators"])
+    cursor.execute(queries["top_decorators"])
 
-    results["top_decorators"] = []
+    results["decorators"] = []
     for fname, count in cursor:
-        results["top_decorators"].append(
+        results["decorators"].append(
             {"name": fname, "count": count}
         )
 
-    print("Dashboard: \033[38;5;9mFetching Modules Detail\033[0m")
-    logger.debug('Fetching Modules Detail')
-    cursor.execute(queries["god_modules"])
+    ###################################### HERE ################
+    
+    dec,ctx, descriptor, has_metaclass, iterable, iterator = cursor.execute(queries["class_traits"]).fetchone()
+    results["class_traits"] = {
+                    "decorated":    dec,
+                    "contextmanager": ctx,
+                    "descriptor":   descriptor,
+                    "has_metaclass": has_metaclass,
+                    "iterable":     iterable,
+                    "iterator":     iterator,
+                }
+    print(f"Dashboard: \033[38;5;9mFetching Functions Details\033[0m")
+    logger.debug('Fetching Functions Details')
 
-    results["top_modules"] = []
-    for name, c, f,g,imp,total in cursor:
-        results["top_modules"].append(
-            {
-                "name": name,
-                "classes": c, "functions": f, 
-                "globals":g, "imports":imp, "total":total
-            }
+    dec, gen, async_count = cursor.execute(queries["function_traits"]).fetchone()
+    results["func_traits"] = {
+        "decorated":   dec,
+        "generator":   gen,
+        "async_count": async_count,
+    }
+
+    print("Dashboard: \033[38;5;9mFetching Hub Analysis\033[0m")
+    logger.debug("hub analysis")
+
+    results["hubs"] = [{"module": module, "fanout": fanout, "fanin": fanin} 
+        for module, fanout, fanin, _ in \
+            cursor.execute(queries["hubs"] ,(f"{package_name}%",))]
+    
+    results["api_surface"] = [{"name": module, 
+                        "cls_count": cls, "func_count": func, 
+                        "imp_count":imp, "cnst_count": cnst, "total": total }
+        for module,cls,method,func,imp,cnst,total in cursor.execute(queries["api_surface"])
+    ]
+    
+    results["inheritance_records"] = [rec
+        for rec in cursor.execute(queries["inheritance_records"])
+    ]
+
+    results["metaclass_records"] = [row[0] for row in cursor.execute(queries["metaclass_graph"])]
+    
+    dec, gen, async_count = cursor.execute(queries["method_traits"]).fetchone()
+    results["method_traits"] = {
+        "decorated":   dec,
+        "generator":   gen,
+        "async_count": async_count,
+    }
+
+    cursor.execute(queries["top_method_decorators"])
+
+    results["top_method_decorators"] = []
+    for fname, count in cursor:
+        results["top_method_decorators"].append(
+            {"name": fname, "count": count}
         )
 
 
 
 
 
-    logger.debug('Fetching first name of imports')
-    cursor.execute(queries["_Import Split"],{'mod':f'{package_name}%'})
-    results["first_imp_names"] = []
-
-    for name,count in cursor:
-        results["first_imp_names"].append(
-            {"name": name, "count":count}
-        )
-
-    print(f'Dashboard: \033[1;38;5;10mComplete Fetching\033[0m')
     
     render_dashboard(results,f'{package_name}.html')
+    cursor.close()
+    conn.close()
 
 
 
