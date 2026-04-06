@@ -13,8 +13,8 @@ class DiscoverEngine:
             logger.error(f'{file_path!r} does not exists')
             raise FileNotFoundError(f'{file_path!r} does not exist')
         
-        self.file_path = file_path 
-        self._package = os.path.split(file_path)[-1]
+        self.file_path = file_path.strip(os.sep).strip() 
+        self._package = os.path.split(self.file_path)[-1]
         self.walker = module_walker_type 
         self.ignore_syntax_error = ignore_syntax_errors
 
@@ -48,10 +48,17 @@ class DiscoverEngine:
                 try:
                     dct = m()
                 except SyntaxError as e:
+                    print(f"\033[38;5;9mSyntax error when parsing: {module_name!r}\033[0m")
                     if not self.ignore_syntax_error:
                         raise e
                     logger.exception(f'Error when trying to parse module')
-                    dct = {}
+                    dct = {'classes': {},
+                          'constants': {'constants': [], 'variables': []},
+                          'functions': {},
+                          'imports': {self._package: {},
+                                      "direct": [],
+                                      "external_imports": {}
+                             }}
                 
                 module_name = module_name.replace("__init__","").strip(' .')
                 yield {module_name:dct}

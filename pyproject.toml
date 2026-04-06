@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pypkgview"
-version = "0.2.1"
+version = "0.2.3"
 description = "Python package introspection and analysis tool"
 authors = [
     { name = "Azema Shaik"}
