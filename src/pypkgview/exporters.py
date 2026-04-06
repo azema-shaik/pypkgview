@@ -87,6 +87,7 @@ class SqliteExporter:
             is_iterable INTEGER,
             is_iterator INTEGER,
             parent_class TEXT,
+            parent_function TEXT,
             has_metaclass INTEGER,
             metaclass TEXT);
 
@@ -104,7 +105,11 @@ class SqliteExporter:
             is_decorated INTEGER,
             is_async INTEGER,
             is_generator INTEGER,
-            has_generator_delegation INTEGER);
+            is_nested INTEGER,
+            has_generator_delegation INTEGER,
+            parent_function TEXT,
+            n_raises INTEGER
+            );
         
         DROP TABLE IF EXISTS methods;
             CREATE TABLE methods (
@@ -114,12 +119,22 @@ class SqliteExporter:
             is_decorated INTEGER,
             is_async INTEGER,
             is_generator INTEGER,
-            has_generator_delegation INTEGER);
+            is_nested INTEGER,
+            has_generator_delegation INTEGER,
+            parent_function TEXT,
+            n_raises INTEGER);
 
         DROP TABLE IF EXISTS decorators;
         CREATE TABLE decorators (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             class_id INTEGER REFERENCES classes(id),
+            function_id INTEGER REFERENCES functions(id),
+            method_id INTEGER REFERENCES methods(id),
+            name TEXT);
+                             
+        DROP TABLE IF EXISTS exceptions;
+        CREATE TABLE exceptions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             function_id INTEGER REFERENCES functions(id),
             method_id INTEGER REFERENCES methods(id),
             name TEXT);
@@ -158,22 +173,29 @@ class SqliteExporter:
             print(f'Parsing: \033[1;38;5;10m{module_name!r}\033[0m')
             cursor.execute("INSERT INTO modules VALUES(?,?)", (idx,module_name))
             class_insert_stmt = """INSERT INTO classes (id, module_id, name, is_descriptor, 
-                               descriptor_type, is_nested, metaclass, parent_class, has_metaclass,
+                               descriptor_type, is_nested, metaclass, parent_class, parent_function,
+                               has_metaclass,
                                is_contextmanager,is_iterable,is_iterator)
                                VALUES 
                                (:id, :module_id, :name, :is_descriptor, :descriptor_type,
                                :is_nested, :metaclass,
-                               :parent_class, :has_metaclass,:is_contextmanager,
+                               :parent_class, :parent_function,:has_metaclass,:is_contextmanager,
                                :is_iterable, :is_iterator)"""
             bases_stmt = """INSERT INTO bases(class_id, name) VALUES (:class_id, :name)"""
             decorator_stmt = """INSERT INTO decorators(class_id, function_id, method_id,name) VALUES 
                             (:class_id, :function_id, :method_id,:name)"""
+            exceptions_stmt = """INSERT INTO exceptions(function_id, method_id,name) VALUES 
+                            (:function_id, :method_id,:name)"""
             functions_stmt = """INSERT INTO functions 
-                (id, module_id, name, is_async, is_generator, has_generator_delegation, is_decorated) VALUES
-                (:id, :module_id, :name, :is_async, :is_generator, :has_generator_delegation, :is_decorated)"""
+                (id, module_id, name, is_async, is_generator, has_generator_delegation, is_decorated,is_nested, parent_function,
+                n_raises) VALUES
+                (:id, :module_id, :name, :is_async, :is_generator, :has_generator_delegation, :is_decorated,:is_nested, :parent_function,
+                :n_raises)"""
             methods_stmt = """INSERT INTO methods
-                (id, class_id, name, is_async, is_generator, has_generator_delegation, is_decorated) VALUES
-                (:id, :class_id, :name, :is_async, :is_generator, :has_generator_delegation, :is_decorated)"""
+                (id, class_id, name, is_async, is_generator, has_generator_delegation, is_decorated,is_nested, parent_function,
+                n_raises) VALUES
+                (:id, :class_id, :name, :is_async, :is_generator, :has_generator_delegation, :is_decorated,:is_nested, :parent_function,
+                :n_raises)"""
             
             for class_name, cls in dct[module_name]["classes"].items():
                 class_id += 1
@@ -183,6 +205,7 @@ class SqliteExporter:
                     "descriptor_type": cls.get("descriptor_type"),
                     "is_nested": int(cls["is_nested"]), 
                     "parent_class": cls["parent_class"],
+                    "parent_function": cls["parent_function"],
                     "has_metaclass": int(cls["metadata"]["has_metaclass"]),
                     "is_contextmanager": int(cls["is_contextmanager"]),
                     "is_iterable": int(cls["is_iterable"]),
@@ -202,11 +225,17 @@ class SqliteExporter:
                      "is_async": int(method["is_async"]),
                      "is_generator": int(method["is_generator"]), 
                      'is_decorated': int(method['is_decorated']),
-                     "has_generator_delegation": int(method["has_generator_delegation"])})
+                     "has_generator_delegation": int(method["has_generator_delegation"]),
+                    "is_nested":int(method["is_nested"]), "parent_function":method["parent_function"],
+                    "n_raises": len(method["exceptions"])})
                 
                     cursor.executemany(decorator_stmt, 
                                 [{"class_id": None, "function_id": None,"method_id": method_id, "name": dec}
                                     for dec in method["decorators"]
+                                ])
+                    cursor.executemany(exceptions_stmt, 
+                                [{"function_id": None,"method_id": method_id, "name": exc}
+                                    for exc in method["exceptions"]
                                 ])
 
                 
@@ -219,12 +248,19 @@ class SqliteExporter:
                      "is_async": int(func["is_async"]),
                      "is_generator": int(func["is_generator"]), 
                      'is_decorated': int(func['is_decorated']),
-                     "has_generator_delegation": int(func["has_generator_delegation"])})
+                     "has_generator_delegation": int(func["has_generator_delegation"]),
+                     "is_nested":int(func["is_nested"]), "parent_function":func["parent_function"],
+                     "n_raises": len(func["exceptions"])})
                 
                 cursor.executemany(decorator_stmt, 
                                [{"class_id": None, "function_id": func_id, "method_id":None,"name": dec}
                                    for dec in func["decorators"]
                                ])
+                cursor.executemany(exceptions_stmt, 
+                                [{"function_id": func_id,"method_id": None, "name": exc}
+                                    for exc in func["exceptions"]
+                                ])
+                
             cursor.executemany("""INSERT INTO constants(module_id,name,type)
                                VALUES(:module_id, :name, :type)""",
                                [{"module_id": idx, "name": cnst,

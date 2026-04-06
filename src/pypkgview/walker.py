@@ -9,7 +9,7 @@ from collections import defaultdict
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
-from .datastructures import Class 
+from .datastructures import Class, Callable 
 from .parser import NodeVisitor 
 
 
@@ -96,6 +96,18 @@ class BaseModuleWalker(ABC):
             
 
         return {"has_metaclass": ("metaclass" in attrs), "attrs": attrs}
+    
+    def _parse_exceptions(self, exceptions: list[ast.Raise],memory):
+        excs = []
+        for exception in exceptions:
+            if not isinstance(exception.exc, ast.Call):
+                continue 
+            exception = ast.unparse(exception.exc.func)
+            excs += [self._handle_name_resolution(exception, memory)]
+        return excs
+
+
+
 
     def _parse_class(self, classes: list[Class], memory) -> dict[str, list[str] | bool | dict[str, bool | str ]]:
         clss_dct = {}
@@ -113,7 +125,9 @@ class BaseModuleWalker(ABC):
                                   "decorators": self._handle_decorator(cls, memory), 
                                   'is_contextmanager': self._parse_context_manager(cls.methods),
                                   'methods': self._parse_function(cls.methods,memory),
-                                  'is_nested': cls.is_nested_class, 'parent_class': cls.parent_class,
+                                  'is_nested': cls.is_nested_class, 
+                                  'parent_class': cls.parent_class,
+                                  'parent_function': cls.parent_function,
                                   "is_descriptor":cls.is_descriptor,
                                   "is_iterator": self._parse_iterator(cls.methods),
                                   'is_iterable': self._parse_iterable(cls.methods),
@@ -130,13 +144,6 @@ class BaseModuleWalker(ABC):
     
     def _parse_iterable(self, nodes: list[ast.FunctionDef | ast.AsyncFunctionDef]):
         return any((x.name == '__iter__') for x in nodes)
-    
-    def _parse_generator(self, node: ast.FunctionDef|ast.AsyncFunctionDef) -> dict[str, bool]:
-        d = list(filter(lambda x: isinstance(x,(ast.Yield,ast.YieldFrom))
-        ,ast.walk(node) ))
-        return {"is_generator": any(isinstance(x, ast.Yield) for x in d), 
-                "has_generator_delegation": any(isinstance(x, ast.YieldFrom) for x in d)
-        }
     
     def _handle_name_resolution(self,name: str, memory):
         logger.debug(f'naming resolution bases or decorators. Resolving {name = !r}')
@@ -176,12 +183,15 @@ class BaseModuleWalker(ABC):
         logger.debug(f'{decs = }')
         return decs
     
-    def  _parse_function(self,functions: list[ast.FunctionDef], memory: dict[str,str]) -> dict[str, dict[str,str|bool] | list[str] | bool]:
+    def  _parse_function(self,functions: list[Callable], memory: dict[str,str]) -> dict[str, dict[str,str|bool] | list[str] | bool]:
         funcs = {}
         for func in functions:
             decs = self._handle_decorator(func, memory)
-            funcs[func.name] = {"is_async": isinstance(func, ast.AsyncFunctionDef),
-                                "is_decorated": bool(decs), "decorators": decs} | self._parse_generator(func)
+            funcs[func.name] = {"is_async": func.is_async,
+                                "is_decorated": bool(decs), "decorators": decs, 
+                                "is_nested": func.is_nested, "parent_function": func.parent_function,
+                                "is_generator": func.is_generator, "has_generator_delegation": func.has_generator_delegation,
+                                "exceptions": self._parse_exceptions(func.exceptions,memory)}
         return funcs
     
     def _parse_constants(self, vars: list[ast.Assign]) -> dict[str,list[str]]:
