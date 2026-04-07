@@ -96,17 +96,7 @@ class BaseModuleWalker(ABC):
             
 
         return {"has_metaclass": ("metaclass" in attrs), "attrs": attrs}
-    
-    def _parse_exceptions(self, exceptions: list[ast.Raise],memory):
-        excs = []
-        for exception in exceptions:
-            if not isinstance(exception.exc, ast.Call):
-                continue 
-            exception = ast.unparse(exception.exc.func)
-            excs += [self._handle_name_resolution(exception, memory)]
-        return excs
-
-
+        
 
 
     def _parse_class(self, classes: list[Class], memory) -> dict[str, list[str] | bool | dict[str, bool | str ]]:
@@ -191,7 +181,7 @@ class BaseModuleWalker(ABC):
                                 "is_decorated": bool(decs), "decorators": decs, 
                                 "is_nested": func.is_nested, "parent_function": func.parent_function,
                                 "is_generator": func.is_generator, "has_generator_delegation": func.has_generator_delegation,
-                                "exceptions": self._parse_exceptions(func.exceptions,memory)}
+                                "exceptions": len(func.exceptions)}
         return funcs
     
     def _parse_constants(self, vars: list[ast.Assign]) -> dict[str,list[str]]:

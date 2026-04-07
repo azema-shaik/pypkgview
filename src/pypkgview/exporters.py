@@ -132,13 +132,6 @@ class SqliteExporter:
             method_id INTEGER REFERENCES methods(id),
             name TEXT);
                              
-        DROP TABLE IF EXISTS exceptions;
-        CREATE TABLE exceptions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            function_id INTEGER REFERENCES functions(id),
-            method_id INTEGER REFERENCES methods(id),
-            name TEXT);
-
         DROP TABLE IF EXISTS constants;                     
         CREATE TABLE constants (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -184,8 +177,6 @@ class SqliteExporter:
             bases_stmt = """INSERT INTO bases(class_id, name) VALUES (:class_id, :name)"""
             decorator_stmt = """INSERT INTO decorators(class_id, function_id, method_id,name) VALUES 
                             (:class_id, :function_id, :method_id,:name)"""
-            exceptions_stmt = """INSERT INTO exceptions(function_id, method_id,name) VALUES 
-                            (:function_id, :method_id,:name)"""
             functions_stmt = """INSERT INTO functions 
                 (id, module_id, name, is_async, is_generator, has_generator_delegation, is_decorated,is_nested, parent_function,
                 n_raises) VALUES
@@ -233,10 +224,7 @@ class SqliteExporter:
                                 [{"class_id": None, "function_id": None,"method_id": method_id, "name": dec}
                                     for dec in method["decorators"]
                                 ])
-                    cursor.executemany(exceptions_stmt, 
-                                [{"function_id": None,"method_id": method_id, "name": exc}
-                                    for exc in method["exceptions"]
-                                ])
+                    
 
                 
             
@@ -256,10 +244,7 @@ class SqliteExporter:
                                [{"class_id": None, "function_id": func_id, "method_id":None,"name": dec}
                                    for dec in func["decorators"]
                                ])
-                cursor.executemany(exceptions_stmt, 
-                                [{"function_id": func_id,"method_id": None, "name": exc}
-                                    for exc in func["exceptions"]
-                                ])
+                
                 
             cursor.executemany("""INSERT INTO constants(module_id,name,type)
                                VALUES(:module_id, :name, :type)""",
